@@ -4,26 +4,27 @@ This README would normally document whatever steps are necessary to get your app
 
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* A desktop GUI for the use of customers to contol their BBUQ (a variant of the Ultra-Q filter).
+* Version 1
 
 ### How do I get set up? ###
 
+Pyinstaller spec files are included.
+Put the desired source files in a folder named src
+Delete any previous build and dist folders
+run pyinstaller <name of spec file>
+
+
+
 * Summary of set up
+ 
 * Configuration
 * Dependencies
 * Database configuration
 * How to run tests
 * Deployment instructions
 
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* jpindar@jpindar.com  aka jeannepindar@gmail.com
+* TelGaAs Inc.
