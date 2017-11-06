@@ -19,16 +19,20 @@ read_delay = 0.2
 
 # noinspection PySimplifyBooleanCheck
 def get_ports():
+    """
+    ask pySerial for a list of com ports
+    :return: a list of strings, each representing an integer
+    """
     possible_ports = serial.tools.list_ports.comports()
     ports = []
     for i in possible_ports:
         s = str(i.device) +'*'+str(i.description)+'*'+str(i.hwid)
         logger.info(s)
-        s = i.device
+        s = i.device   # something like 'COM4'
         ports.append(int(s[3:]))  # from position 3 to the end
     logger.info(str(ports))
-    if ports == []:
-        ports = None
+    if (ports is None) or (ports == []):
+        return ['']
     return ports
 
 

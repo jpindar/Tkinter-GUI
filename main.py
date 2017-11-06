@@ -52,19 +52,8 @@ globe.unsaved = False
 possible_ports = None
 
 
-# noinspection PySimplifyBooleanCheck
-def com_port_choices():
-    ports = serialdevice_pyserial.get_ports()
-    if ports is None:
-        return [""]
-    if ports == []:
-        return [""]
-    return ports
-
-
 class MainWindow(tk.Frame):
     """
-      main window is a Frame
     """
     major_freq_increment = 1
     minor_freq_increment = 0.0025
@@ -119,7 +108,7 @@ class MainWindow(tk.Frame):
 
     def __create_top_bar(self):
         global possible_ports
-        possible_ports = com_port_choices()
+        possible_ports = serialdevice_pyserial.get_ports()
         self.top_bar = tk.Frame(self, height=20, background='#D9E5EE')
         self.top_bar.configure(borderwidth=2, relief='flat')
         self.top_bar.grid(row=0, column=0, columnspan=2, sticky=tk.E + tk.W)
@@ -430,8 +419,6 @@ class MainWindow(tk.Frame):
         r = globe.dut.get_write()
         self.write_b.set(r)
 
-
-
     def ufmode_handler(self, event=None):
         s = None
         try:
@@ -513,7 +500,7 @@ class MainWindow(tk.Frame):
 
     def populate_comport_menu(self):
         global possible_ports
-        possible_ports = com_port_choices()
+        possible_ports = serialdevice_pyserial.get_ports()
         self.comport_dropdown.set_menu(possible_ports[0], *possible_ports)
         n = len(possible_ports)
         if possible_ports[0] =='':
