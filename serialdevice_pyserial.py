@@ -212,20 +212,24 @@ class SerialDevice:
         :param terminator: read until you receive this termination character(s)
         :return: bytes (because that's what the original .readline() returns)
         """
+        MAX_COUNT = 1000  # completely arbitrary number
         eol = b'\r'      # '\r' or b'\r' ?
         c = None
         if terminator is not None:
             eol = terminator  # TODO pylint doesn't like this (redefined-variable-type) but it works
         length_eol = len(eol)
         line = bytearray()
-        # TODO: needs length limit?
+        count = 0
         try:
             while self.comPort.inWaiting() > 0:
                 # c = self.comPort.read(self.comPort.inWaiting())   # not sure if this is better
                 c = self.comPort.read(1)
                 if c:
                     line += c
+                    count += 1
                     if line[-length_eol:] == eol:
+                        break
+                    if count > MAX_COUNT:
                         break
                 else:
                     break
