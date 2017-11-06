@@ -261,6 +261,9 @@ class MainWindow(tk.Frame):
         self.status_bar3 = tk.Label(self.bottom_bar, text='  ', font = default_font, fg="red")
         self.status_bar3.grid(row=0, column=2, columnspan=1, sticky=tk.N + tk.S + tk.E)
 
+    def status1(self,msg, **kwargs):
+        self.status_bar1.config(text=msg,**kwargs )
+        self.update()
 
     def enable_widgets(self, on_off, uf_mode=True):
         if on_off:
@@ -303,7 +306,6 @@ class MainWindow(tk.Frame):
         """
           atten is max gain - desired gain
         """
-        # logger.info(inspect.stack()[0][3])
         s = None
         try:
             s = self._gain_s.get()
@@ -317,6 +319,7 @@ class MainWindow(tk.Frame):
         # globe.dut.set_gain(g)  #no, firmware rev <2.01 don't have this
         # g = globe.dut.get_gain()
         # because there was one unit without gain commands
+        # logger.info(inspect.stack()[0][3])
         try:
             a = globe.dut.nominal_gain-float(s)
         except ValueError as e:
@@ -379,14 +382,12 @@ class MainWindow(tk.Frame):
         r = globe.dut.get_overpower_bypass_enable()
         self.overpower_bypass_b.set(r)
 
-
     def logging_handler(self, event=None):
         b = self.logging_b.get()
         if b:
             logging.disable(logging.NOTSET)
         else:
             logging.disable(999)
-
 
     def write_handler(self, event=None):
         """
@@ -450,7 +451,6 @@ class MainWindow(tk.Frame):
             logger.warning(e.__class__)
             logger.warning("value error in " + inspect.stack()[0][3])
             return
-
         f += increment
         globe.dut.set_uf(f)
         f = globe.dut.get_uf()
@@ -474,16 +474,24 @@ class MainWindow(tk.Frame):
 
     def freq_box_handler(self, event=None):
         s = None
+        f = 0.0
         try:
             s = self._freq_s.get()
+            f = float(s)
         except ValueError as e:
             logger.warning(e.__class__)
             logger.warning("value error in " + inspect.stack()[0][3])
-        logger.info("setting the freq to " + str(s))
-        globe.dut.set_freq(s)
-        f = globe.dut.get_freq()
-        self._freq_v.set(float(f))
-        self._freq_s.set(str(f))
+        logger.info("setting the freq to " + str(f))
+        try:
+            globe.dut.set_freq(f)
+            f = globe.dut.get_freq()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
+        self._freq_s.set("{:.6f}".format(f))
 
 
     def populate_comport_menu(self):
@@ -505,51 +513,62 @@ class MainWindow(tk.Frame):
             pass
 
     def connect_button_handler(self, event=None):
-        self.status_bar1.config(text = "connecting...")
+        self.status1(" ")
         self.enable_widgets(False)
         if globe.dut is not None:
-            if globe.dut.port.is_open():
-                globe.close_dut()
+            globe.close_dut()  # this sets globe.dut to None
 
         if self._comport_str.get() == '':
             if not self.populate_comport_menu():
-                self.status_bar1.config(text = "Cannot find any com ports. Connect device and try again.")
+                self.status1("Cannot find any com ports. Connect device and try again.")
             else:
-                self.status_bar1.config(text = "")
+                self.status1("")
             return
-
         try:
             port_num = int(self._comport_str.get())
+            self.status1("connecting...")
             globe.open_dut([port_num], self.terminal_window.textbox,globe.DUTKind.serial)
         except Exception as e:
             logger.error(e.__class__)
             logger.error("Can't open a serial port\n")
             self.terminal_window.textbox.append("Couldn't open the serial port\n")
-            self.status_bar1.config(text = "Cannot connect to a device on that port")
+            self.status1("Cannot connect to a device on that port")
             return
         # would dut be None if it had been disconnected? No.
         if globe.dut is None:
-            self.status_bar1.config(text = "Cannot connect to device on that port")
+            self.status1("Cannot connect to device on that port")
             return
+        self.refresh_gui()
 
-        globe.start_freq = globe.dut.get_start_freq()
-        globe.stop_freq = globe.dut.get_stop_freq()
-        # both of these ways  of setting the label work.
-        # is the second one more efficient?
-        self.start_label.configure(text=str(globe.start_freq)+ ' MHz')
-        self.stop_label['text']=str(globe.stop_freq)+ ' MHz'
-        self._freq_s.set("{:.6f}".format(globe.dut.get_freq()))
-        self.minor_freq_increment = globe.dut.get_chan_spacing() / const.HZ_PER_MHZ
-        #can't just query the gain cuz there was 1 unit w/o a gain query
-        self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
-        self.bypass_i.set(globe.dut.get_bypass())
-        self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
-        self.write_b.set(globe.dut.get_write())
-        # let the UF wait til other widgets are being enabled, looks bad to do it first
-        uf_mode = globe.dut.get_uf_mode() # TODO this once got called when globe.dut was None, can't replicate
-        self._ufmode_i.set(uf_mode)
-        uf_setting = globe.dut.get_ultrafine()
-        self._uf_s.set(str(uf_setting))
+    def refresh_gui(self):
+        uf_mode = None
+        try:
+            globe.start_freq = globe.dut.get_start_freq()
+            globe.stop_freq = globe.dut.get_stop_freq()
+            # both of these ways  of setting the label work.
+            # is the second one more efficient?
+            self.start_label.configure(text=str(globe.start_freq)+ ' MHz')
+            self.stop_label['text']=str(globe.stop_freq)+ ' MHz'
+            self._freq_s.set("{:.6f}".format(globe.dut.get_freq()))
+            self.minor_freq_increment = globe.dut.get_chan_spacing() / const.HZ_PER_MHZ
+            # can't just query the gain cuz there was 1 unit w/o a gain query
+            self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
+            self.bypass_i.set(globe.dut.get_bypass())
+            self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
+            self.write_b.set(globe.dut.get_write())
+            # let the UF wait til other widgets are being enabled, looks bad to do it first
+            uf_mode = globe.dut.get_uf_mode() # TODO this once got called when globe.dut was None, can't replicate
+            self._ufmode_i.set(uf_mode)
+            uf_setting = globe.dut.get_ultrafine()
+            self._uf_s.set(str(uf_setting))
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
+        # except Exception as e:
+        #     pass
         self.enable_widgets(True, uf_mode)
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()

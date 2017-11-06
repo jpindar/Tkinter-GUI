@@ -16,6 +16,37 @@ import globe
 import serialdevice_pyserial
 
 
+class UltraQError(Exception):
+    """Raise for my specific kind of exception"""
+    def __init___(self, name, response):
+        super().__init__()
+        self.name = name
+        self.response = response
+
+
+class UltraQLoggedOutError(UltraQError):
+    """Raise for my specific kind of exception"""
+    def __init___(self, name, response):
+        super().__init__()
+
+
+class UltraQResponseError(UltraQError):
+    """Raise for my specific kind of exception"""
+    def __init___(self, name, response):
+        super().__init__()
+
+# class ValidationError(Exception):
+#     def __init__(self, message, errors):
+#
+#         # Call the base class constructor with the parameters it needs
+#         super(ValidationError, self).__init__(message)
+#   or    super().__init__(message)
+#
+#         # Now for your custom code...
+#         self.errors = errors
+
+
+
 def correct_id(s):
     if s is None:
         return False
@@ -107,7 +138,7 @@ class UltraQ:
             self.exists = False
             logger.info(self.class_name + " constructor failed, raising IOError.\n")
             # TODO create a better exception class for this
-            raise IOError
+            raise UltraQError
 
 
     def initialize_me(self):
@@ -138,9 +169,9 @@ class UltraQ:
         r = self.port.read()
         r = r.strip(' \r\n')
         logger.info('get_id: got <' + str(r) + '>')
-        if r is None:
-            r = "None"
         self.output.append(r)
+        if r is None:
+            raise UltraQResponseError("None", "Bad response: None")
         return r
 
 
