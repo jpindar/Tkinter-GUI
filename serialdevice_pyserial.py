@@ -38,12 +38,13 @@ def get_ports():
 
 class SerialDevice:
     """
-    A serial port, created by pySerial
+    An object that represents a generic serial device
     """
     def __init__(self):
-        """constructor for serial device, no parameters
+        """
+        Constructor for serial device, no parameters
+        This constructor just creates the object, doesn't give it a serial port
         :rtype : SerialDevice
-        create an instance variable but don't open the port
         """
         logger.info(" ")
         logger.info("SerialDevice constructor")
@@ -56,20 +57,18 @@ class SerialDevice:
 
     def open_port(self, port_num):
         """
-         opens the port with fixed parameters
+        opens a serial port
         :param port_num: COM1 is port 0, etc
-        :return:
+        :return: boolean
         """
-        if port_num == 0:
-            return      # should never happen
         self.close_port()
         port_name = "COM" + str(port_num)
         logger.info("opening serial port " + port_name)
         try:
-            baud_rate = 19200
+            baud_rate = 19200 # normal, don't change this
             # baud_rate = 115200  # works
             # baud_rate = 230400  # works
-            # baud_rate = 460800    # doesn't work reliably
+            # baud_rate = 460800  # doesn't work reliably
             self.comPort = serial.Serial(port=port_name,
                                          baudrate=baud_rate,
                                          parity=serial.PARITY_NONE,
@@ -84,23 +83,27 @@ class SerialDevice:
             logger.warning("SerialDevice.openPort: Serial port setting out of range\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            raise e
+            # raise e
+            return False
         except serial.SerialException as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            raise e
+            # raise e
+            return False
         except Exception as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            raise e
+            # raise e
+            return False
         else:
             # assert isinstance(self.comPort, pyvisa.resources.serial.SerialInstrument)
             # not necessary if constructor worked, but assertions are good.
             logger.info("SerialDevice.openPort: opened a " + str(self.comPort.__class__))
-            # self.port_num = port_num
-            logger.info("Constructor is done")
+            self.exists = True
+            return True
+
 
     def is_open(self):
         """

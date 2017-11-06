@@ -10,10 +10,9 @@ Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 
 """
 # TODO add logo on help and about boxes
-
 # TODO input power indicator?
 # TODO help file (esp related to atten range, step size)
-
+# pylint: disable=wrong-import-position
 import inspect
 import logging
 
@@ -27,8 +26,6 @@ if ENABLE_LOGGING:
                             level=logging.INFO)
     # logger.setLevel(logging.CRITICAL)
     logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
-
-
 logger.info("testing logger")
 import time
 import os
@@ -49,7 +46,6 @@ const.VERSION = "v1.04"
 const.BUILD = "1.04.0"
 globe.user_interrupt = False
 globe.unsaved = False
-possible_ports = None
 
 
 class MainWindow(tk.Frame):
@@ -618,10 +614,14 @@ def display_help_messagebox(event=None):
 
 def exit_handler(event=None):
     logger.info('QUITTING')
+    if globe.dut is not None:
+        globe.close_dut()
     logger.info('calling root.destroy and os.exit()')
     root.destroy()
+
     # TODO: not sure if os._exit is the best practice here, but it works OK
-    # sys.exit()  # this doesn't always work
+    # sys.exit()  #this doesn't work - the test loop keeps going until it crashes due to the textbox being gone.
+    # raise SystemExit doesn't always work
     # noinspection PyProtectedMember
     os._exit(0)
 

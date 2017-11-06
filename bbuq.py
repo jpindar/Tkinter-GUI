@@ -7,9 +7,6 @@ Author: jpindar@jpindar.com
 
 
 """
-# TODO: find out how to clear the response if a write command causes one
-
-
 __author__ = 'jpindar@jpindar.com'
 
 import logging
@@ -20,17 +17,16 @@ import serialdevice_pyserial
 
 
 def correct_id(s):
-    s2 = s.upper()
-    if s2[:7] == "ULTRA-Q":
-        return True
-    else:
+    if s is None:
         return False
+    s2 = s.upper()
+    return bool(s2[:7] == "ULTRA-Q")
+
 
 
 class UltraQ:
     """
-       the output parameter can be anything with an append method
-       including dev null
+       represents a BBUQ type Ultra-Q, regardless of connection type
     """
     default_name = "ASRL4::INSTR"
     class_name = 'UltraQ'
@@ -46,7 +42,7 @@ class UltraQ:
 
         self.exists = False
         self.comPort = None
-        self.friendly_name = "serial port"
+        self.friendly_name = "Ultra-Q"
         self.port_num = None
         self.output = output
         self.nominal_gain = 10.0
@@ -76,17 +72,21 @@ class UltraQ:
 
         if correct_id(s):
             self.exists = True
-            self.revision = self.get_revision()
-            self.output.append('\n')
-            self.nominal_gain = self.get_nominal_gain()
-            self.attn_step_size = self.get_attn_step()
+            self.initialize_me()
+            logger.info(self.class_name + " constructor is done.\n")
         else:
             self.exists = False
             logger.info(self.class_name + " constructor failed, raising IOError.\n")
             # TODO create a better exception class for this
             raise IOError
 
-        logger.info(self.class_name + " constructor is done.\n")
+
+    def initialize_me(self):
+        self.revision = self.get_revision()
+        self.output.append('\n')
+        self.nominal_gain = self.get_nominal_gain()
+        self.attn_step_size = self.get_attn_step()
+
 
     def close(self):
         self.port.close_port()
@@ -104,14 +104,9 @@ class UltraQ:
         r = None
         logger.info('get_id: sending ' + msg)
         self.output.append(msg + '\n')  # ??
-        try:
-            # self.port.flushInput()  # nah
-            self.port.write(msg)
-            r = self.port.read()
-        except Exception as e:       # more specific exceptions should be already caught
-            logger.error("in get_id")
-            logger.error(e.__class__)
-            return
+        # self.port.flushInput()  # nah
+        self.port.write(msg)
+        r = self.port.read()
         logger.info('get_id: got <' + str(r) + '>')
         if r is None:
             r = "None"
@@ -120,14 +115,14 @@ class UltraQ:
 
 
     def get_revision(self):
-        # returns something like "0.012.00"
+        # returns something like "0.012.00" or "2.02"
         msg = 'REVISION?\r'
         logger.info('sending ' + msg)
         self.output.append(msg)
         self.port.write(msg)
         r = self.port.read()
         logger.info('got <' + str(r) + '>')
-        r = r.strip(" revisionREVISION\r\n")
+        r = r.strip(" revisionREVISIONversionVERSION\r\n")
         self.output.append(r)
         return r
 
@@ -148,6 +143,7 @@ class UltraQ:
             return 0.0
         return f
 
+
     def set_any_freq(self, msg) -> str:
         logger.info('sending ' + msg)
         self.output.append(msg + '\n')
@@ -156,6 +152,7 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         return r
+
 
     def get_any_boolean(self, msg):
         logger.info('sending ' + msg)
