@@ -55,14 +55,17 @@ class SerialDevice:
         logger.info("SerialDevice constructor done")
 
 
-    def open_port(self, port_num):
+    def open_port(self, connection):
         """
         opens a serial port
-        :param port_num: COM1 is port 0, etc
+        connection_info[0] should be an integer, 0 meaning COM1, etc
+        returns True if it succeeded, False if there was an error
+        :param connection_info: a list, 0th element is an integer
         :return: boolean
         """
         self.close_port()
-        port_name = "COM" + str(port_num)
+        self.port_num = connection[0]
+        port_name = "COM" + str(self.port_num)
         logger.info("opening serial port " + port_name)
         try:
             baud_rate = 19200 # normal, don't change this
@@ -119,13 +122,14 @@ class SerialDevice:
         return True
 
     def write(self, msg):
-        """send a string
+        """
+        send a string
+        don't need to check if port is open, comport.write() does that
+
         :param msg: the string to send
         :return: none
-        # don't need to check if port is open, comport.write() does that
-        # TODO: pop up or other obvious error handling when exception occurs?
         """
-
+        # TODO pop up or other obvious error handling when exception occurs?
         # self.comPort.reset_input_buffer()
         # self.comPort.reset_output_buffer()
         response = None
@@ -139,9 +143,9 @@ class SerialDevice:
             # except serial.portNotOpenError as e:   # nope, this causes a Type error
         except serial.SerialException as e:
             if e == serial.portNotOpenError:
-                logger.warning("SerialDevice._readline: port not open error")
+                logger.warning("SerialDevice.write: port not open error")
             else:
-                logger.warning("SerialDevice._readline: error raised by serial port read")
+                logger.warning("SerialDevice.write: error raised by serial port write")
             logger.warning("SerialDevice.write: can't write to the serial port\r\n")
             logger.warning(e.__class__)
             # logger.warning(e.__doc__)
@@ -149,52 +153,48 @@ class SerialDevice:
         except Exception as e:   # should never happen?
             logger.error(e.__class__)
             raise e
-        # logger.info("Done")
+        return
 
 
     def read(self):
         """
         reads a response from the serial port
-        :rtype: string
-
-        # don't need to check if port is open, self._readline will throw an exception if its not
-        # don't use self.comPort.readline() because comport.readline() is extremely slow
-        # maybe it's waiting for a timeout?
+        don't need to check if port is open, self._readline will throw an exception if its not
+        don't use self.comPort.readline() because comport.readline() is extremely slow
+        : rtype: string
         """
-        response = None
-        r=""
+        # TODO investigate why comPort.readline() is so slow
+        r_bytes = None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
         try:
-            # response = self.comPort.readline()
-            response = self._readline()  # response is of type 'bytes'
-            # if (response is None) or (response == ""):
-            # do what?  return "" ?
-            r = str(response.decode(encoding='UTF-8'))    # cast bytes to string
-            # logger.info("received " + r)
+            # r_bytes = self.comPort.readline()
+            r_bytes = self._readline()
         except serial.SerialException as e:
             if e == serial.portNotOpenError:
                 logger.warning("SerialDevice._readline: port not open error")
             else:
                 logger.warning("SerialDevice._readline: error raised by serial port read")
-            logger.warning(e.args[0])
             logger.warning(e.__class__)
+            logger.warning(e.__doc__)
+            logger.warning(e.strerror)
+            logger.warning(e.__cause__)
             # raise e   # could throw something here, depending on the cause?
             return None
         except (IOError, AttributeError) as e:
-            logger.warning("exception: " + str(e.__class__))
-            logger.warning(str(e.args))
-            logmsg = "SerialDevice.read: didn't get a response from serial port " + str(self.port_num)
-            logger.warning(logmsg)
-            logger.warning("<" + str(r) + ">")
+            logger.warning("SerialDevice.read: didn't get a response from serial port " + str(self.port_num))
+            logger.warning(e.__class__)
+            logger.warning(e.__doc__)
+            logger.warning(e.strerror)
+            logger.warning(e.__cause__)
+            return None
         else:
+            r_str = str(r_bytes.decode(encoding='UTF-8'))    # cast bytes to string
             # logger.info("SerialDevice.read: got <" + str(r) + ">")
-            r += '\n'   # because read strips the term. Which is really, really wrong, but whatever.
-                        # TODO find a better fix
-            return r
+        r_str = r_str.strip('\r\n')
+        return r_str
 
 
     def close_port(self):
-        logger.info("close_port: closing serial port")
         if not hasattr(self, 'comPort'):
             return
         if not hasattr(self.comPort, 'close'):
@@ -203,11 +203,14 @@ class SerialDevice:
             self.comPort.close()
         except Exception as e:
             logger.warning(e.__class__)
+            raise e
+
 
     def _readline(self, terminator='\r'):
         """
         implemented this myself because comport.readline() is extremely slow
-        TODO figure out why?
+        :param terminator: read until you receive this termination character(s)
+        :return: bytes (because that's what the original .readline() returns)
         """
         eol = b'\r'      # '\r' or b'\r' ?
         c = None
@@ -229,7 +232,6 @@ class SerialDevice:
         except Exception as e:
             logger.error("in _readline")
             logger.error(e.__class__)
-            logger.error(str(e.args[0]))
             raise e  # let .read() handle it
         return bytes(line)
 
