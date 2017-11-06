@@ -15,6 +15,8 @@ user_pause = False
 # exiting = False
 # file_name = None
 dut = None
+start_freq = 0
+stop_freq = 0
 
 
 # port serial_port_num should default to 0 to make other routines

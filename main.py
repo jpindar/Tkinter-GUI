@@ -59,8 +59,6 @@ class MainWindow(tk.Frame):
         self.parent = parent
         self.my_settings_window = None
         self.unsaved_text = False
-        self.start_freq = 0.0
-        self.stop_freq = 0.0
         self.overpower_bypass_b = tk.BooleanVar()
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
@@ -103,7 +101,6 @@ class MainWindow(tk.Frame):
 
 
     def __create_top_bar(self):
-        global possible_ports
         possible_ports = serialdevice_pyserial.get_ports()
         self.top_bar = tk.Frame(self, height=20, background='#D9E5EE')
         self.top_bar.configure(borderwidth=2, relief='flat')
@@ -158,7 +155,6 @@ class MainWindow(tk.Frame):
         self.stop_label = tk.Label(self.freq_subframe1, text="     ", width=12,  anchor=tk.E)
         self.stop_label.grid(row=cntl_row, column=4, padx=5, sticky=tk.E)
 
-        self._freq_v = tk.DoubleVar()
         self._freq_s = tk.StringVar()
 
         cntl_row += 1
@@ -212,22 +208,18 @@ class MainWindow(tk.Frame):
         self.bypass_frame.grid(row=6, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self._uf_s = tk.StringVar()
-
         self.uf_label = tk.Label(self.uf_frame, text="UltraFine tuning", width=16)
         self.uf_label.grid(row=0, column=0, sticky=tk.W)
         self.uf_label.config(state=tk.DISABLED)
-
-        self.ufmode_i = tk.IntVar()
-
+        self._ufmode_i = tk.IntVar()
         self.ufmode_radio1 = tk.Radiobutton(self.uf_frame, text="calibrated", value=1,
-                            variable=self.ufmode_i, command=self.ufmode_handler)
+                            variable=self._ufmode_i, command=self.ufmode_handler)
         self.ufmode_radio1.grid(row=1,column=0,sticky=tk.W)
         self.ufmode_radio1.config(state=tk.DISABLED)
         self.ufmode_radio0 = tk.Radiobutton(self.uf_frame, text="adjustable(0-255)", value=0,
-                            variable=self.ufmode_i, command=self.ufmode_handler)
+                            variable=self._ufmode_i, command=self.ufmode_handler)
         self.ufmode_radio0.grid(row=2,column=0,sticky=tk.W)
         self.ufmode_radio0.config(state=tk.DISABLED)
-
         self.uf_leftButton = tk.Button(self.uf_frame,text='<', command=lambda: self.uf_button_handler(-1)  )
         self.uf_leftButton.grid(row=2,column=1, padx = 3)
         self.uf_box = tk.Entry(self.uf_frame, textvariable=self._uf_s, bg='light grey', width=5,font="-weight bold")
@@ -242,20 +234,16 @@ class MainWindow(tk.Frame):
         self.bypass_chk.grid(row=0, column=0, sticky=tk.W)
         self.bypass_chk.config(state=tk.DISABLED)
 
-
         self._gain_s = tk.StringVar()
         self.gain_label = tk.Label(self.gain_frame, text="gain", width=7, anchor = tk.E)
         self.gain_label.grid(row=0, column=0, sticky=tk.W)
         self.gain_label.config(state=tk.DISABLED)
-
         self.gain_leftButton = tk.Button(self.gain_frame,text='<', command=lambda: self.gain_button_handler(-1)  )
         self.gain_leftButton.grid(row=0,column=1, padx = 3)
-
         self.gain_box = tk.Entry(self.gain_frame, textvariable=self._gain_s, bg='light grey', width=6,font="-weight bold")
         self.gain_box.grid(row=0, column=2, pady=5, padx= 5, sticky=tk.W)
         self.gain_box.bind('<Return>', self.gain_handler)
         self.gain_box.config(state=tk.DISABLED)
-
         self.gain_rightButton = tk.Button(self.gain_frame,text='>',command=lambda: self.gain_button_handler(1))
         self.gain_rightButton.grid(row=0,column=3, padx = 3, sticky='e')
 
@@ -274,11 +262,13 @@ class MainWindow(tk.Frame):
         self.status_bar3.grid(row=0, column=2, columnspan=1, sticky=tk.N + tk.S + tk.E)
 
 
-    def enable_widgets(self, on_off):
+    def enable_widgets(self, on_off, uf_mode=True):
         if on_off:
             new_state = tk.NORMAL
         else:
             new_state = tk.DISABLED
+        self.option_menu.entryconfig(0, state=new_state)
+        self.option_menu.entryconfig(1, state=new_state)
         self.freq_box.config(state=new_state)
         self.freq_label1.config(state=new_state)
         self.start_label.config(state=new_state)
@@ -291,13 +281,16 @@ class MainWindow(tk.Frame):
         self.uf_label.config(state=new_state)
         self.ufmode_radio0.config(state=new_state)
         self.ufmode_radio1.config(state=new_state)
-        self.option_menu.entryconfig(0, state=new_state)
-        self.option_menu.entryconfig(1, state=new_state)
-        self.uf_leftButton.config(state=new_state)
-        self.uf_rightButton.config(state=new_state)
-        if self.ufmode_i.get() == 0:
+        if uf_mode:
+            self.uf_label.config(state=tk.DISABLED)
+            self.uf_box.config(state=tk.DISABLED)
+            self.uf_leftButton.config(state=tk.DISABLED)
+            self.uf_rightButton.config(state=tk.DISABLED)
+        else:
             self.uf_label.config(state=new_state)
             self.uf_box.config(state=new_state)
+            self.uf_leftButton.config(state=new_state)
+            self.uf_rightButton.config(state=new_state)
 
 
     # These functions have an optional 'event' parameter because button binding passes an
@@ -418,7 +411,7 @@ class MainWindow(tk.Frame):
     def ufmode_handler(self, event=None):
         s = None
         try:
-            s = self.ufmode_i.get()
+            s = self._ufmode_i.get()
         except ValueError as e:
             logger.warning(e.__class__)
             logger.warning("value error in ufmode_handler")
@@ -426,7 +419,7 @@ class MainWindow(tk.Frame):
         logger.info("setting the uf mode to " + str(b))
         globe.dut.set_uf_mode(b)
         r = globe.dut.get_uf_mode()
-        self.ufmode_i.set(r)
+        self._ufmode_i.set(r)
         if r:
             self.uf_box.config(state=tk.DISABLED)
             self.uf_leftButton.config(state=tk.DISABLED)
@@ -476,7 +469,6 @@ class MainWindow(tk.Frame):
         logger.info("setting the freq to " + str(f))
         globe.dut.set_freq(f)
         f = globe.dut.get_freq()
-        self._freq_v.set(float(f))
         self._freq_s.set(str(f))
 
 
@@ -540,34 +532,25 @@ class MainWindow(tk.Frame):
             self.status_bar1.config(text = "Cannot connect to device on that port")
             return
 
-        self.start_freq = globe.dut.get_start_freq()
-        self.stop_freq = globe.dut.get_stop_freq()
-        self.start_label.configure(text=str(self.start_freq)+ ' MHz')
-        self.stop_label.configure(text=str(self.stop_freq)+ ' MHz')
-
-        f = globe.dut.get_freq()
-        self._freq_v.set(float(f))
-        self._freq_s.set(str(f))
+        globe.start_freq = globe.dut.get_start_freq()
+        globe.stop_freq = globe.dut.get_stop_freq()
+        # both of these ways  of setting the label work.
+        # is the second one more efficient?
+        self.start_label.configure(text=str(globe.start_freq)+ ' MHz')
+        self.stop_label['text']=str(globe.stop_freq)+ ' MHz'
+        self._freq_s.set("{:.6f}".format(globe.dut.get_freq()))
         self.minor_freq_increment = globe.dut.get_chan_spacing() / const.HZ_PER_MHZ
-
         #can't just query the gain cuz there was 1 unit w/o a gain query
         self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
         self.bypass_i.set(globe.dut.get_bypass())
         self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
         self.write_b.set(globe.dut.get_write())
         # let the UF wait til other widgets are being enabled, looks bad to do it first
-        n = globe.dut.get_uf_mode()
-        self.ufmode_i.set(n)
-        self.enable_widgets(True)
-        if n:
-            self.uf_box.config(state=tk.DISABLED)
-            self.uf_leftButton.config(state=tk.DISABLED)
-            self.uf_rightButton.config(state=tk.DISABLED)
-        else:
-            self.uf_box.config(state=tk.NORMAL)
-            self.uf_leftButton.config(state=tk.NORMAL)
-            self.uf_rightButton.config(state=tk.NORMAL)
-            self._uf_s.set(str(globe.dut.get_uf()))
+        uf_mode = globe.dut.get_uf_mode() # TODO this once got called when globe.dut was None, can't replicate
+        self._ufmode_i.set(uf_mode)
+        uf_setting = globe.dut.get_ultrafine()
+        self._uf_s.set(str(uf_setting))
+        self.enable_widgets(True, uf_mode)
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
 
@@ -652,12 +635,17 @@ const.ICON_FILE = resource_path('company_logo.ico')
 const.HEADER_IMAGE = resource_path('banner250x50.gif')
 
 root = tk.Tk()
+style = ttk.Style()
+style.theme_use('alt')
 # use .option_add if you want to change the font,
-# but inthis case changing the size & boldness is enough
 # root.option_add("*Font", "courier 9 bold")
 default_font = tk.font.nametofont("TkDefaultFont")
 default_font.configure(size=9, weight="bold")
 text_font = tk.font.nametofont("TkTextFont")
+
+bold_style = ttk.Style()
+bold_style.configure("bold.TButton", font ='bold')
+#  or bold_style.configure("bold.TButton", font = ('Sans','10','bold'))
 
 app = MainWindow(root)
 app.pack(fill='both', expand='True')
