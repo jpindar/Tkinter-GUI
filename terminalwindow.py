@@ -132,7 +132,7 @@ class TerminalWindow(tk.Toplevel):
     def send_button_handler(self, event=None):
         if globe.dut is None:
             # logger.info("globe.dut is None, so call globe.open_dut()")
-            globe.open_dut(globe.serial_port_num, self.textbox, mock=True)
+            globe.open_dut([globe.serial_port_num], self.textbox, kind = globe.DUTKind.mock)
         if globe.dut is None:
             return
         if globe.dut.port.is_open():
