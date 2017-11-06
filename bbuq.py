@@ -183,29 +183,31 @@ class UltraQ:
         self.port.write(msg)
         r = self.port.read()
         logger.info('got <' + str(r) + '>')
-        r = r.strip(" revisionREVISIONversionVERSION\r\n")
         self.output.append(r)
-        return r
+        r2 = r.strip(" revisionREVISION\r\n")
+        if r2 is None:
+            raise UltraQResponseError("None", "Bad response: None")
+        return r2
 
-    def get_any_freq(self, msg):
+
+    def get_any_attn(self,msg):
         logger.info('sending ' + msg)
         self.output.append(msg + '\n')
         self.port.write(msg)
         r = self.port.read()
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
-        r = r.strip(string.ascii_letters + ' \r\n')
-        # logger.info(r)
         if r is None:
-            return 0.0
+            raise UltraQResponseError("None", "Bad response: None")
+        r2 = r.strip(string.ascii_letters + ' \r\n')
         try:
-            f = float(r)
+            f = float(r2)
         except ValueError:
-            return 0.0
+            raise UltraQResponseError("ValueError","Bad response: '" + r + "'")
         return f
 
 
-    def set_any_freq(self, msg) -> str:
+    def set_any_attn(self, msg):
         logger.info('sending ' + msg)
         self.output.append(msg + '\n')
         self.port.write(msg)
@@ -222,11 +224,14 @@ class UltraQ:
         r = self.port.read()
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
+        if r is None:
+            raise UltraQResponseError("None", "Bad response: None")
         try:
-            n = int(r)
+            r2 = int(r)
         except ValueError:
-            return None
-        return n
+            raise UltraQResponseError("ValueError","Bad response: '" + r + "'")
+        return r2
+
 
     def set_any_boolean(self, msg, data):
         if data in [True, '1', 1]:
@@ -241,23 +246,26 @@ class UltraQ:
         self.output.append(r)
         return r
 
-    def get_any_attn(self,msg):
+    def get_any_freq(self, msg):
         logger.info('sending ' + msg)
-        self.output.append(msg + '\n')
+        self.output.append(msg)
         self.port.write(msg)
         r = self.port.read()
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
+        r = r.strip(string.ascii_letters + ' \r\n')
+        # logger.info(r)
         if r is None:
             return 0.0
         try:
-            r = r.strip(string.ascii_letters + ' \r\n')
             f = float(r)
         except ValueError:
             return 0.0
         return f
 
-    def set_any_attn(self, msg):
+
+
+    def set_any_freq(self, msg) -> str:
         logger.info('sending ' + msg)
         self.output.append(msg + '\n')
         self.port.write(msg)
@@ -265,6 +273,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         return r
+
+
+
 
     def get_attn_step(self):
         return self.get_any_attn("ATT STEP?\r")
