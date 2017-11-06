@@ -6,6 +6,7 @@ __author__ = 'jpindar@jpindar.com'
 import logging
 logger = logging.getLogger(__name__)
 
+from enum import Enum
 import bbuq
 
 # unsaved = False
@@ -22,6 +23,15 @@ dut = None
 # doesn't have a place to store a serial_port_num
 serial_port_num = 0
 
+
+# so DUTkind.serial or globe.DUTkind.serial are members of
+# the class DUTKind,  not of an instance of DUTKind
+class DUTKind(Enum):
+    mock = 0
+    serial = 1
+    network = 2
+
+dut_kind = DUTKind.serial
 
 
 class DevNull:
@@ -42,14 +52,20 @@ def close_dut():
     return
 
 
-def open_dut(port_num, output, mock=False):
+def open_dut(connection, output, kind):
+    """
+    connection info is a list of either a com port number or an ip address and port
+    output is sonething with an .append(string) method
+    kind is a enum of DUTKind
+    """
     global dut
     global serial_port_num
 
-    serial_port_num = port_num
+    if kind == DUTKind.serial or kind == DUTKind.mock:
+        serial_port_num = connection[0]
     if dut is None:
         try:
-            dut = bbuq.UltraQ(output, mock)
+            dut = bbuq.UltraQ(connection, output, kind)
         except (OSError, bbuq.UltraQError) as e:
             logger.error(e.__class__)
             logger.error("Can't create the dut\n")

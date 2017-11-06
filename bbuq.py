@@ -33,42 +33,71 @@ class UltraQ:
     friendly_name = 'UltraQ'
 
 
-    def __init__(self, output, mock = False):
+    def __init__(self, connection, output, kind):
         """
-        constructor for a serial device
+        constructor for an Ultra-Q device
+        connection is a list containing either a serial port number
+        or an ip address and a port
+        output is anything with an .append(string) method
+        kind is an enum representing the type of connection:
+        serial, network or mock
         mock means open a serial port to whatever's there,
         without expecting it to respond correctly
-        """
 
+         all methods like self.port.open_port(connection)
+         should close the port (if it exists and is open) before opening it
+        """
+        self.kind = kind
+        self.connection = connection
         self.exists = False
         self.comPort = None
         self.friendly_name = "Ultra-Q"
         self.port_num = None
+        self.port = None
         self.output = output
         self.nominal_gain = 10.0
         self.revision = 0.0
         self.attn_step_size = 0.25
         logger.info(self.class_name + " constructor")
-        try:
-            self.port = serialdevice_pyserial.SerialDevice()  # just a dumb constructor
-            self.port.open_port(globe.serial_port_num)   # this is what actually does something
-        except Exception as e:
-            logger.error(e.__class__)
-            logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
-            # output.append("Can't open the serial port (COM" + str(globe.serial_port_num) + ")\n")
-        if mock:
-            logger.info(self.class_name + " mock constructor is done.\n")
-            return
+        if self.connect():
+            self.login()
 
+
+    def connect(self):
+        success = None
+        if self.kind == globe.DUTKind.serial or self.kind == globe.DUTKind.mock:
+            try:
+                self.port = serialdevice_pyserial.SerialDevice()  # just a dumb constructor
+                success = self.port.open_port(self.connection)   # this is what actually does something
+            except Exception as e:
+                logger.error(e.__class__)
+                logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
+                return False
+        if not success:
+            logger.info(self.class_name + " port constructor failed.\n")
+            return False
+        if self.kind == globe.DUTKind.mock:
+            logger.info(self.class_name + " mock constructor is done.\n")
+            self.exists = True
+            return True
+        return True
+
+
+    def login(self):
         s = None
-        # the first command sometimes fails, so make it an extra, empty one
-        try:
-            self.port.write('\r')
-            self.port.read()  # throw away result which is probably just a terminator
-            s = self.get_id()
-        except Exception as e:    # more specific exceptions should be already caught
-            logger.error(e.__class__)
-            logger.error("can't get_id()")
+        # remember the first command sometimes fails, that's OK
+        attempts = 0
+        while attempts < 3:  # arbitrary, but must let it try several times
+            attempts +=1
+            try:
+                self.port.write('ID?\r')
+                s = self.port.read()
+            except Exception as e:    # more specific exceptions should be already caught
+                logger.error(e.__class__)
+                logger.error("can't get_id()")
+                raise e
+            if correct_id(s):  # we are logged in
+                break
 
         if correct_id(s):
             self.exists = True
@@ -107,6 +136,7 @@ class UltraQ:
         # self.port.flushInput()  # nah
         self.port.write(msg)
         r = self.port.read()
+        r = r.strip(' \r\n')
         logger.info('get_id: got <' + str(r) + '>')
         if r is None:
             r = "None"

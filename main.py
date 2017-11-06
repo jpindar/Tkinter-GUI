@@ -528,7 +528,7 @@ class MainWindow(tk.Frame):
 
         try:
             port_num = int(self._comport_str.get())
-            globe.open_dut(port_num, self.terminal_window.textbox, mock = False)
+            globe.open_dut([port_num], self.terminal_window.textbox,globe.DUTKind.serial)
         except Exception as e:
             logger.error(e.__class__)
             logger.error("Can't open a serial port\n")
@@ -570,7 +570,6 @@ class MainWindow(tk.Frame):
             self._uf_s.set(str(globe.dut.get_uf()))
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
-
 
     def show_terminal(self,event=None):
         self.terminal_window.textbox.clear()
