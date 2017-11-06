@@ -300,7 +300,7 @@ class UltraQ:
         if r is None:
             raise UltraQResponseError("None", "Bad response: None")
         n = 0
-        r = r.strip(string.ascii_letters + ' \r\n')
+        r = r.strip(string.ascii_letters + '= \r\n')
         try:
             n = int(r)
             # zero out lowest 6 bits
