@@ -350,8 +350,53 @@ class UltraQ:
             raise UltraQLoggedOutError("LoggedOut",r)
         return r
 
-    def get_attn_step(self):
-        return self.get_any_attn("ATT STEP?\r")
+
+    def get_chan_spacing(self):
+        msg = "CHAN SPACE?\r"
+        logger.info('sending ' + msg)
+        self.output.append(msg + '\n')
+        self.port.write(msg)
+        r = self.port.read()
+        self.output.append(r)
+        logger.info('got <' + str(r) + '>')
+        if 'password' in r:
+            raise UltraQLoggedOutError("LoggedOut","foo")
+        r2 = r.strip(string.ascii_letters + ' \r\n')
+        if r2 is None:
+            raise UltraQError("None", "Bad response: '" + r + "' (None)")
+        try:
+            f = float(r2)
+        except ValueError:
+            raise UltraQError("ValueError","Bad response: '" + r + "'")
+        return f
+
+
+    # def set_chan_spacing(self, data):
+    #     msg = "CHAN SPACE " + str(data) + '\r'
+    #     logger.info('sending ' + msg)
+    #     self.output.append(msg + '\n')
+    #     self.port.write(msg)
+    #     r = self.port.read()
+    #     logger.info('got <' + str(r) + '>')
+    #     self.output.append(r)
+    #     if 'password' in r:
+    #         raise UltraQLoggedOutError("LoggedOut",r)
+    #     return r
+
+
+    def get_overpower_status(self):
+        msg = "OVERPOWER?\r"
+        self.port.write(msg)
+        r = self.port.read()
+        if 'password' in r:
+            raise UltraQLoggedOutError("LoggedOut",r)
+        if r is None:
+            raise UltraQResponseError("None", "Bad response: None")
+        try:
+            r2 = int(r)
+        except (ValueError, AttributeError):
+            raise UltraQResponseError("ValueError","Bad response: '" + r + "'")
+        return r2
 
 
     def get_step(self):
@@ -386,8 +431,29 @@ class UltraQ:
         return r
 
 
-    def get_lofreq(self):
-        return self.get_any_freq("LO?\r")
+
+
+
+
+#     #### methods that essentially just call another method
+
+    def get_nominal_gain(self):
+        g = self.get_any_attn("NOMINALGAIN?\r")
+        if self.revision == 2.0:  # workaround for bug in this firmware version
+            if g is None:
+                return 1.0
+            return g/4.0   # this version erroneously returned the number of 0.25 dB steps
+        else:
+            if g is None:
+                return 1.0
+            return g
+
+
+    def get_attn_step(self):
+        return self.get_any_attn("ATT STEP?\r")
+
+    def get_if_freq(self):
+        return self.get_any_freq("IFRQ?\r")
 
     def get_start_freq(self):
         return self.get_any_freq("START FREQ?\r")
@@ -401,28 +467,27 @@ class UltraQ:
     def set_freq(self, freq: float) -> str:
         return self.set_any_freq("FREQ " + str(freq)[:10] + '\r')
 
+    def get_lofreq(self):
+        # return self.get_any_freq("LO?\r")
+        return self.get_any_freq("LOFREQ?\r")
+
+    def get_lock(self):
+       # string instead of boolean cuz it can be handy to get debug info this way
+        return self.get_any_string("LOCK?\r")
+
+
     def set_lofreq(self, freq: float) -> str:
-        return self.set_any_freq("LO " + str(freq)[:10] + '\r')
+        # return self.set_any_freq("LO " + str(freq)[:10] + '\r')
+        return self.set_any_freq("LOFREQ " + str(freq)[:10] + '\r')
 
     def get_bypass(self):
+        # return self.get_any_boolean("ACT?\r")
         return self.get_any_boolean("BYPASS?\r")
 
-    def get_overpower_status(self):
-        msg = "OVERPOWER?\r"
-        self.port.write(msg)
-        r = self.port.read()
-        if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut",r)
-        if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
-        try:
-            r2 = int(r)
-        except (ValueError, AttributeError):
-            raise UltraQResponseError("ValueError","Bad response: '" + r + "'")
-        return r2
 
     def set_bypass(self, b):
         self.set_any_boolean("BYPASS ", b)
+
 
     def get_overpower_bypass_enable(self):
         # TODO make this deal gracefully (return False) with units that have no overpower bypass
@@ -456,16 +521,6 @@ class UltraQ:
     def set_uf_mode(self, b):
         self.set_any_boolean("UFCM ", b)
 
-    def get_nominal_gain(self):
-        g = self.get_any_attn("NOMINALGAIN?\r")
-        if self.revision == 2.0:  # workaround for bug in this firmware version
-            if g is None:
-                return 1.0
-            return g/4.0   # this version erroneously returned the number of 0.25 dB steps
-        else:
-            if g is None:
-                return 1.0
-            return g
 
     def get_gain(self):
         return self.get_any_attn("GAIN?\r")
@@ -512,34 +567,5 @@ class UltraQ:
             raise UltraQError("None", "Bad response: None")
         return r
 
-    def get_chan_spacing(self):
-        msg = "CHAN SPACE?\r"
-        logger.info('sending ' + msg)
-        self.output.append(msg + '\n')
-        self.port.write(msg)
-        r = self.port.read()
-        self.output.append(r)
-        logger.info('got <' + str(r) + '>')
-        if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut","foo")
-        r2 = r.strip(string.ascii_letters + ' \r\n')
-        if r2 is None:
-            raise UltraQError("None", "Bad response: '" + r + "' (None)")
-        try:
-            f = float(r2)
-        except ValueError:
-            raise UltraQError("ValueError","Bad response: '" + r + "'")
-        return f
 
-    def set_chan_spacing(self, data):
-        msg = "CHAN SPACE " + str(data) + '\r'
-        logger.info('sending ' + msg)
-        self.output.append(msg + '\n')
-        self.port.write(msg)
-        r = self.port.read()
-        logger.info('got <' + str(r) + '>')
-        self.output.append(r)
-        if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut",r)
-        return r
 
