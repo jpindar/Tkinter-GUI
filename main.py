@@ -211,7 +211,7 @@ class MainWindow(tk.Frame):
         self.menu_bar.add_cascade(label='About', menu=about_menu)
         about_menu.add_command(label='About', command=display_about_messagebox)
         about_menu.add_command(label='Help', command=display_help_messagebox)
-        about_menu.add_command(label='Terminal', command=self.show_terminal)
+        about_menu.add_command(label='Terminal', command=show_terminal)
 
     def __fill_top_frame(self):
         self.top_bar0 = self.TopBar0(self.top_frame, width =290, background='#D9E5EE')
@@ -733,9 +733,7 @@ class MainWindow(tk.Frame):
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
 
-    def show_terminal(self,event=None):
-        self.terminal_window.textbox.clear()
-        self.terminal_window.deiconify()
+
 
 
     def poll_for_overpower_bypass(self):
@@ -752,6 +750,10 @@ class MainWindow(tk.Frame):
         #     self.status_bar3.config(text = "")
         # self.after(poll_timing, self.poll_for_overpower_bypass)
 
+
+def show_terminal():
+    app.terminal_window.textbox.clear()
+    app.terminal_window.deiconify()
 
 def user_interrupt_handler(event=None):
     globe.user_interrupt = True
