@@ -92,7 +92,8 @@ class UltraQ:
         self.attn_step_size = 0.25
         logger.info(self.class_name + " constructor")
         if self.connect():
-            self.login()
+            if self.kind != globe.DUTKind.mock:
+                self.login()
 
 
     def connect(self):
