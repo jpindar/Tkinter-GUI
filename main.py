@@ -68,11 +68,11 @@ class MainWindow(tk.Frame):
 
         tk.Grid.rowconfigure(self, 6, weight =1)
         tk.Grid.columnconfigure(self, 1, weight=1)
+        self.__create_menus()
         self.__create_top_bar()
         self.__create_freq_frame()
         self.__create_widgets()
         self._create_bottom_widgets()
-        self.__create_menus()
 
 
     def __create_menus(self):
@@ -99,37 +99,31 @@ class MainWindow(tk.Frame):
         about_menu.add_command(label='Help', command=display_help_messagebox)
         about_menu.add_command(label='Terminal', command=self.show_terminal)
 
-
     def __create_top_bar(self):
         possible_ports = serialdevice_pyserial.get_ports()
         self.top_bar = tk.Frame(self, height=20, background='#D9E5EE')
         self.top_bar.configure(borderwidth=2, relief='flat')
         self.top_bar.grid(row=0, column=0, columnspan=2, sticky=tk.E + tk.W)
 
-        col = 0
         style = ttk.Style()
         style.theme_use('alt')
         self._comport_str = tk.StringVar()
         self.comport_label = tk.Label(self.top_bar, text="Com Port",bg='#D9E5EE')
-        self.comport_label.grid(row=0, column=col, sticky='e')
+        self.comport_label.grid(row=0, column=0, sticky='e')
 
-        col += 1
         self.comport_dropdown = ttk.OptionMenu(self.top_bar, self._comport_str, possible_ports[0],
                                                *possible_ports, command = self.comport_handler)
         self.comport_dropdown.config(width=4)
-        self.comport_dropdown.grid(row=0, column=col, sticky='w', padx=3, ipady=1)
+        self.comport_dropdown.grid(row=0, column=1, sticky='w', padx=3, ipady=1)
 
-        col += 1
         self.button_connect = tk.Button(self.top_bar, text="Connect", bg='light grey', command=self.connect_button_handler)
-        self.button_connect.grid(row=0, column=col, padx=2, pady=2, sticky=tk.E)
+        self.button_connect.grid(row=0, column=2, padx=2, pady=2, sticky=tk.E)
         self.button_connect.bind('<Return>', self.connect_button_handler)
 
-        col += 1
         photo = tk.PhotoImage(file=const.HEADER_IMAGE)
         self.image_label = tk.Label(self.top_bar, image=photo, bg = '#D9E5EE')
         self.image_label.photo = photo
-        self.image_label.grid(row=0, column=col, padx = 10, sticky=tk.EW)
-
+        self.image_label.grid(row=0, column=3, padx = 10, sticky=tk.EW)
 
     def __create_freq_frame(self):
         self.freq_frame = tk.Frame(self, height=2, width=3,relief=tk.GROOVE,borderwidth=4)
@@ -140,63 +134,32 @@ class MainWindow(tk.Frame):
         self.freq_subframe2 = tk.Frame(self.freq_frame,height=1, width = 3)
         self.freq_subframe2.grid(row=1, column=0)
 
-        cntl_row = 0
         self.start_label = tk.Label(self.freq_subframe1, text="     ", width=12, anchor=tk.W)
-        self.start_label.grid(row=cntl_row, column=0, padx=5, sticky=tk.W)
-
-        tk.Label(self.freq_subframe1, text="", width=1).grid(row=cntl_row, column=1, sticky=tk.EW)
-
-        tk.Label(self.freq_subframe1, text="", width=15).grid(row=cntl_row, column=2, sticky=tk.EW)
+        self.start_label.grid(row=0, column=0, padx=5, sticky=tk.W)
+        tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=1, sticky=tk.EW)
+        tk.Label(self.freq_subframe1, text="", width=15).grid(row=0, column=2, sticky=tk.EW)
         self.freq_label1 = tk.Label(self.freq_subframe1, text=" FREQUENCY IN MHZ", width=20, state = tk.DISABLED)
-        self.freq_label1.grid(row=cntl_row, column=2, sticky=tk.EW)
-
-        tk.Label(self.freq_subframe1, text="", width=1).grid(row=cntl_row, column=3, sticky=tk.EW)
-
+        self.freq_label1.grid(row=0, column=2, sticky=tk.EW)
+        tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=3, sticky=tk.EW)
         self.stop_label = tk.Label(self.freq_subframe1, text="     ", width=12,  anchor=tk.E)
-        self.stop_label.grid(row=cntl_row, column=4, padx=5, sticky=tk.E)
+        self.stop_label.grid(row=0, column=4, padx=5, sticky=tk.E)
 
         self._freq_s = tk.StringVar()
-
-        cntl_row += 1
         self.leftButton = tk.Button(self.freq_subframe2, text='<<', command=lambda: self.freq_button_handler(-1 * self.major_freq_increment))
-        self.leftButton.grid(row=cntl_row, column=1,  padx=1, pady=3, sticky='e')
-
+        self.leftButton.grid(row=1, column=1,  padx=1, pady=3, sticky='e')
         self.leftButton2 = tk.Button(self.freq_subframe2, text='<', command=lambda: self.freq_button_handler(-1 * self.minor_freq_increment))
-        self.leftButton2.grid(row=cntl_row, column=2,  padx=1, pady=3, sticky='e')
-
-        self.freq_box = tk.Entry(self.freq_subframe2,textvariable=self._freq_s,bg='light grey',width=10,font="-weight bold")
-        self.freq_box.grid(row=cntl_row, column=3, padx = 5)
+        self.leftButton2.grid(row=1, column=2,  padx=1, pady=3, sticky='e')
+        self.freq_box = tk.Entry(self.freq_subframe2,textvariable=self._freq_s, width=10,font="-weight bold")
+        self.freq_box.grid(row=1, column=3, padx = 5)
         self.freq_box.bind('<Return>', self.freq_box_handler)
         self.freq_box.config(state=tk.DISABLED)
-
         self.rightButton = tk.Button(self.freq_subframe2, text='>', command=lambda: self.freq_button_handler(self.minor_freq_increment))
-        self.rightButton.grid(row=cntl_row, column=4, padx=1, pady=3, sticky='w')
-
+        self.rightButton.grid(row=1, column=4, padx=1, pady=3, sticky='w')
         self.rightButton2 = tk.Button(self.freq_subframe2, text='>>',  command=lambda: self.freq_button_handler(self.major_freq_increment))
-        self.rightButton2.grid(row=cntl_row, column=5, padx=1, pady=3, sticky='w')
+        self.rightButton2.grid(row=1, column=5, padx=1, pady=3, sticky='w')
 
-        # TODO  implement these radiobuttons
-        # cntl_row += 1
-        # self.rb_frame = tk.Frame(self.freq_frame, height=1, width=4, bg="dark grey", borderwidth=5)
-        # self.rb_frame.grid(row=cntl_row, column=0, rowspan=1,columnspan=8, padx=5, pady=5, ipady=[5], sticky=tk.N + tk.EW)
-        # cntl_row = 0
-
-        # self.radio_button_1 = tk.Button(self.rb_frame, text='__________')
-        # self.radio_button_1.grid(row=cntl_row, column=0, padx=1, pady=3,sticky=tk.EW)
-        # self.radio_button_2 = tk.Button(self.rb_frame, text='__________')
-        # self.radio_button_2.grid(row=cntl_row, column=1, padx=1, pady=3,sticky=tk.EW)
-        # self.radio_button_3 = tk.Button(self.rb_frame, text='__________')
-        # self.radio_button_3.grid(row=cntl_row, column=2, padx=1, pady=3,sticky=tk.EW)
-        # self.radio_button_4 = tk.Button(self.rb_frame, text='__________')
-        # self.radio_button_4.grid(row=cntl_row, column=3, padx=1, pady=3,sticky=tk.EW)
-        # self.radio_button_5 = tk.Button(self.rb_frame, text='__________')
-        # self.radio_button_5.grid(row=cntl_row, column=4, padx=1, pady=3,sticky=tk.EW)
-        # spacer
-        # cntl_row += 1
-        # tk.Label(self.freq_frame).grid(row=cntl_row, column=0,  sticky=tk.E+tk.W)
 
     def __create_widgets(self):
-
         self.uf_frame = tk.Frame(self, height=1, width=3,  relief=tk.GROOVE, borderwidth=4)
         self.uf_frame.grid(row=4, column=0, rowspan=1,  padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
@@ -220,9 +183,9 @@ class MainWindow(tk.Frame):
                             variable=self._ufmode_i, command=self.ufmode_handler)
         self.ufmode_radio0.grid(row=2,column=0,sticky=tk.W)
         self.ufmode_radio0.config(state=tk.DISABLED)
-        self.uf_leftButton = tk.Button(self.uf_frame,text='<', command=lambda: self.uf_button_handler(-1)  )
+        self.uf_leftButton = tk.Button(self.uf_frame,text='<', command=lambda: self.uf_button_handler(-1))
         self.uf_leftButton.grid(row=2,column=1, padx = 3)
-        self.uf_box = tk.Entry(self.uf_frame, textvariable=self._uf_s, bg='light grey', width=5,font="-weight bold")
+        self.uf_box = tk.Entry(self.uf_frame, textvariable=self._uf_s,width=5,font="-weight bold")
         self.uf_box.grid(row=2, column=2, padx =5, pady=5,sticky=tk.W)
         self.uf_box.bind('<Return>', self.uf_box_handler)
         self.uf_box.config(state=tk.DISABLED)
@@ -238,9 +201,9 @@ class MainWindow(tk.Frame):
         self.gain_label = tk.Label(self.gain_frame, text="gain", width=7, anchor = tk.E)
         self.gain_label.grid(row=0, column=0, sticky=tk.W)
         self.gain_label.config(state=tk.DISABLED)
-        self.gain_leftButton = tk.Button(self.gain_frame,text='<', command=lambda: self.gain_button_handler(-1)  )
+        self.gain_leftButton = tk.Button(self.gain_frame,text='<', command=lambda: self.gain_button_handler(-1))
         self.gain_leftButton.grid(row=0,column=1, padx = 3)
-        self.gain_box = tk.Entry(self.gain_frame, textvariable=self._gain_s, bg='light grey', width=6,font="-weight bold")
+        self.gain_box = tk.Entry(self.gain_frame, textvariable=self._gain_s,width=6,font="-weight bold")
         self.gain_box.grid(row=0, column=2, pady=5, padx= 5, sticky=tk.W)
         self.gain_box.bind('<Return>', self.gain_handler)
         self.gain_box.config(state=tk.DISABLED)
@@ -249,8 +212,6 @@ class MainWindow(tk.Frame):
 
 
     def _create_bottom_widgets(self):
-        style = ttk.Style()
-        style.theme_use('alt')
         self.bottom_bar = tk.Frame(self, height=40, borderwidth=5, relief='ridge')
         self.bottom_bar.grid(row=10, column=0, columnspan='2', sticky=tk.N + tk.S + tk.E + tk.W)
         self.bottom_bar.columnconfigure(1, weight=1)
