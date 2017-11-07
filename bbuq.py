@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 import string
 import globe
 import serialdevice_pyserial
+import socketdevice
 
 
 class UltraQError(Exception):
@@ -62,7 +63,7 @@ class UltraQ:
     default_name = "ASRL4::INSTR"
     class_name = 'UltraQ'
     friendly_name = 'UltraQ'
-
+    PASSWORD_LENGTH = 16
 
     def __init__(self, connection, output, kind):
         """
@@ -96,6 +97,8 @@ class UltraQ:
 
     def connect(self):
         success = None
+        # TODO if port already exists, do we need to do anything to it to close it
+        # before creating or opening another?
         if self.kind == globe.DUTKind.serial or self.kind == globe.DUTKind.mock:
             try:
                 self.port = serialdevice_pyserial.SerialDevice()  # just a dumb constructor
@@ -104,6 +107,23 @@ class UltraQ:
                 logger.error(e.__class__)
                 logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
                 return False
+        if self.kind == globe.DUTKind.network:
+            try:
+                self.port = socketdevice.SocketDevice()  # just a dumb constructor
+                success = self.port.open_port(self.connection)   # this is what actually does something
+            except OSError as e:
+                logger.warning(e.__class__)    # TimeoutError
+                logger.warning(e.__doc__)      # "Timeout expired"
+                logger.warning(e.strerror)     # "a connection attempt failed because.....
+                logger.warning(e.errno)
+                logger.warning(e.winerror)
+                success = False
+            except Exception as e:
+                logger.error(e.__class__)
+                logger.error("can't create socketdevice or open network socket")
+                # output.append("Can't open the network connection " + connection[0] + ':' + str(connection[1]) + "\n")
+                return False
+
         if not success:
             logger.info(self.class_name + " port constructor failed.\n")
             return False
@@ -115,10 +135,11 @@ class UltraQ:
 
 
     def login(self):
+        globe.password = globe.password[:UltraQ.PASSWORD_LENGTH]
         s = None
         # remember the first command sometimes fails, that's OK
         attempts = 0
-        while attempts < 3:  # arbitrary, but must let it try several times
+        while attempts < 10:  # arbitrary, but must let it try several times
             attempts +=1
             try:
                 self.port.write('ID?\r')
@@ -127,8 +148,16 @@ class UltraQ:
                 logger.error(e.__class__)
                 logger.error("can't get_id()")
                 raise e
+
             if correct_id(s):  # we are logged in
                 break
+            # TODO this should also be in a try block
+            if s == 'password:':
+                self.port.write(globe.password + '\r')
+                s = self.port.read()
+                if s[:3] == 'bad':
+                    self.output.append(s)
+                    break
 
         if correct_id(s):
             self.exists = True

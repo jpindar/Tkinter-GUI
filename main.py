@@ -25,6 +25,7 @@ if ENABLE_LOGGING:
         logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
                             level=logging.INFO)
     # logger.setLevel(logging.CRITICAL)
+else:
     logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
 logger.info("testing logger")
 import time
@@ -42,10 +43,11 @@ import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
-const.VERSION = "v1.04"
-const.BUILD = "1.04.0"
+const.VERSION = "v1.05"
+const.BUILD = "1.05.0"
 globe.user_interrupt = False
 globe.unsaved = False
+poll_timing = 1000
 
 
 class MainWindow(tk.Frame):
@@ -171,9 +173,9 @@ class MainWindow(tk.Frame):
 
         self.__create_menus()
         self.__fill_top_frame()
-        self.__create_freq_frame()
+        self.__fill_freq_frame()
         self.__fill_mid_frame()
-        self._create_bottom_widgets()
+        self.__fill_bottom_bar()
         self.top_bar0.tkraise()
         self.top_bar1.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
 
@@ -233,7 +235,7 @@ class MainWindow(tk.Frame):
         self.image_label.photo = photo
         self.image_label.grid(row=0, column=4,sticky=tk.NS + tk.E)
 
-    def __create_freq_frame(self):
+    def __fill_freq_frame(self):
         self.freq_subframe1 = tk.Frame(self.freq_frame,height=1, width = 4)
         self.freq_subframe1.grid(row=0, column=0)
         self.freq_subframe2 = tk.Frame(self.freq_frame,height=1, width = 4)
@@ -316,7 +318,7 @@ class MainWindow(tk.Frame):
         self.gain_rightButton.grid(row=0,column=3, padx = 3, sticky='e')
 
 
-    def _create_bottom_widgets(self):
+    def __fill_bottom_bar(self):
         self.status_bar1 = tk.Label(self.bottom_bar, text=' ', font = text_font)
         self.status_bar1.grid(row=0, column=0, columnspan=1, sticky=tk.N + tk.S + tk.W)
         self.status_bar2 = tk.Label(self.bottom_bar, text='  ', font = text_font)
@@ -638,7 +640,16 @@ class MainWindow(tk.Frame):
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
         if globe.dut_kind == globe.DUTKind.network:
-            pass
+            try:
+                globe.remote_address = self.top_bar2.remote_address_str.get()
+                globe.remote_port = self.top_bar2.remote_port_str.get()
+                self.top_bar3.tkraise()
+                self.top_bar3.password_box.focus_set()
+                return   # go wait for user to enter password and click again
+            except Exception as e:
+                logger.error(e.__class__)
+                self.status1("Cannot connect to a device at that address")
+                return
         else:
             if self.top_bar1.comport_str.get() == '':
                 if not self.top_bar1.populate_comport_menu():
@@ -659,6 +670,33 @@ class MainWindow(tk.Frame):
         # would dut be None if it had been disconnected? No.
         if globe.dut is None:
             self.status1("Cannot connect to device on that port")
+            return
+        self.refresh_gui()
+
+    def connect_button_handler2(self, event=None):
+        self.enable_widgets(False)
+        if globe.dut is not None:
+            globe.close_dut()  # this sets globe.dut to None
+        try:
+            globe.remote_address = self.top_bar2.remote_address_str.get()
+            globe.remote_port = self.top_bar2.remote_port_str.get()
+            globe.password = self.top_bar3.password_str.get()
+            self.status1("Connecting to device at " + globe.remote_address + ':' + globe.remote_port)
+            globe.open_dut([globe.remote_address, globe.remote_port], app.terminal_window.textbox, kind = globe.DUTKind.network)
+        except Exception as e:
+            logger.error(e.__class__)
+            logger.error("Can't open a socket\n")
+            app.terminal_window.textbox.append("Couldn't open the socket\n")
+            self.status1("Cannot connect to a device")
+            self.top_bar3.password_str.set("")
+            self.top_bar2.tkraise()
+            return
+        finally:
+            self.top_bar3.password_str.set("")
+            self.top_bar2.tkraise()
+
+        if globe.dut is None:
+            self.status1("Cannot connect to device")
             return
         self.refresh_gui()
 
