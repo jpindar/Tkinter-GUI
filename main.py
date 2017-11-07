@@ -306,13 +306,6 @@ class MainWindow(tk.Frame):
         """
           atten is max gain - desired gain
         """
-        s = None
-        try:
-            s = self._gain_s.get()
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-
         # can't just do this:
         # g = float(s)
         # logger.info("setting the gain to " + str(g))
@@ -320,18 +313,26 @@ class MainWindow(tk.Frame):
         # g = globe.dut.get_gain()
         # because there was one unit without gain commands
         # logger.info(inspect.stack()[0][3])
+        s = None
         try:
+            s = self._gain_s.get()
             a = globe.dut.nominal_gain-float(s)
+            if a<0:
+                a = 0
+            logger.info("setting the attn to " + str(a))
+            globe.dut.set_attn(a)
+            # can't just query the gain cuz there was 1 unit w/o a gain query
+            g = globe.dut.nominal_gain - globe.dut.get_attn()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         except ValueError as e:
             logger.warning(e.__class__)
             logger.warning("value error in " + inspect.stack()[0][3])
             return
-        if a<0:
-            a = 0
-        logger.info("setting the attn to " + str(a))
-        globe.dut.set_attn(a)
-        #can't just query the gain cuz there was 1 unit w/o a gain query
-        g = globe.dut.nominal_gain - globe.dut.get_attn()
         s = '{0:5.2f}'.format(g)
         self._gain_s.set(s)
 
@@ -342,17 +343,21 @@ class MainWindow(tk.Frame):
             a = globe.dut.nominal_gain-g
             if a<0:
                 a = 0
+            logger.info("setting the attn to " + str(a))
+            globe.dut.set_attn(a)
+            # can't just query the gain cuz there was 1 unit w/o a gain query
+            g = globe.dut.nominal_gain - globe.dut.get_attn()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         except ValueError as e:
             logger.warning(e.__class__)
             logger.warning("value error in " + inspect.stack()[0][3])
             return
-        logger.info("setting the attn to " + str(a))
-        globe.dut.set_attn(a)
-        #can't just query the gain cuz there was 1 unit w/o a gain query
-        g = globe.dut.nominal_gain - globe.dut.get_attn()
-        s = '{0:5.2f}'.format(g)
-        self._gain_s.set(s)
-
+        self._gain_s.set('{0:5.2f}'.format(g))
 
     def bypass_handler(self, event=None):
         s = None
@@ -363,8 +368,15 @@ class MainWindow(tk.Frame):
             logger.warning("value error in bypass_handler")
         b = bool(s == 1)
         logger.info("setting the dut byp to " + str(b))
-        globe.dut.set_bypass(b)
-        r = globe.dut.get_bypass()
+        try:
+            globe.dut.set_bypass(b)
+            r = globe.dut.get_bypass()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         self.bypass_i.set(r)
 
     def overpower_handler(self, event=None):
@@ -378,11 +390,18 @@ class MainWindow(tk.Frame):
         else:
             b = 0
         logger.info("setting the over power protection to " + str(b))
-        globe.dut.set_overpower_bypass_enable(b)
-        r = globe.dut.get_overpower_bypass_enable()
+        try:
+            globe.dut.set_overpower_bypass_enable(b)
+            r = globe.dut.get_overpower_bypass_enable()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         self.overpower_bypass_b.set(r)
 
-    def logging_handler(self, event=None):
+    def logging_handler(self, event=None): # TODO test this
         b = self.logging_b.get()
         if b:
             logging.disable(logging.NOTSET)
@@ -405,8 +424,15 @@ class MainWindow(tk.Frame):
         else:
             b = 0
         logger.info("setting the EEPROM write to " + str(b))
-        globe.dut.set_write(b)
-        r = globe.dut.get_write()
+        try:
+            globe.dut.set_write(b)
+            r = globe.dut.get_write()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         self.write_b.set(r)
 
     def ufmode_handler(self, event=None):
@@ -418,8 +444,17 @@ class MainWindow(tk.Frame):
             logger.warning("value error in ufmode_handler")
         b = bool(s == 1)
         logger.info("setting the uf mode to " + str(b))
-        globe.dut.set_uf_mode(b)
-        r = globe.dut.get_uf_mode()
+        try:
+            globe.dut.set_uf_mode(b)
+            r = globe.dut.get_uf_mode()
+            n = globe.dut.get_ultrafine()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
+
         self._ufmode_i.set(r)
         if r:
             self.uf_box.config(state=tk.DISABLED)
@@ -429,7 +464,6 @@ class MainWindow(tk.Frame):
             self.uf_box.config(state=tk.NORMAL)
             self.uf_leftButton.config(state=tk.NORMAL)
             self.uf_rightButton.config(state=tk.NORMAL)
-            n = globe.dut.get_uf()
             self._uf_s.set(str(n))
 
     def uf_box_handler(self, event=None):
@@ -440,8 +474,15 @@ class MainWindow(tk.Frame):
             logger.warning("value error in " + inspect.stack()[0][3])
             return
         logger.info("setting the ultrafine to " + str(s))
-        globe.dut.set_uf(s)
-        f = globe.dut.get_uf()
+        try:
+            globe.dut.set_ultrafine(s)
+            f = globe.dut.get_ultrafine()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         self._uf_s.set(str(f))
 
     def uf_button_handler(self, increment, event=None):
@@ -452,13 +493,18 @@ class MainWindow(tk.Frame):
             logger.warning("value error in " + inspect.stack()[0][3])
             return
         f += increment
-        globe.dut.set_uf(f)
-        f = globe.dut.get_uf()
+        try:
+            globe.dut.set_ultrafine(f)
+            f = globe.dut.get_ultrafine()
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
         self._uf_s.set(str(f))
 
-
     def freq_button_handler(self, increment, event=None):
-        # f = 0.0
         try:
             f = float(self._freq_s.get())
         except ValueError as e:
@@ -467,9 +513,19 @@ class MainWindow(tk.Frame):
             return
         f += increment
         logger.info("setting the freq to " + str(f))
-        globe.dut.set_freq(f)
-        f = globe.dut.get_freq()
-        self._freq_s.set(str(f))
+        try:
+            globe.dut.set_freq(f)
+            f2 = globe.dut.get_freq() # if this fails, it raises the exception
+            # but then device & gui might be out of sync
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except bbuq.UltraQLoggedOutError as e:
+            self.status1("Not Connected to Device")
+            return
+        else:
+            self.status1("")
+            self._freq_s.set("{:.6f}".format(f2))
 
 
     def freq_box_handler(self, event=None):
