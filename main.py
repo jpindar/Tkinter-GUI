@@ -38,7 +38,7 @@ import serialdevice_pyserial
 import terminalwindow
 import const
 import globe
-
+import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
@@ -54,6 +54,91 @@ class MainWindow(tk.Frame):
     major_freq_increment = 1
     minor_freq_increment = 0.0025
 
+    class TopBar1(tk.Frame):
+        def __init__(self, parent, gparent,**kw):
+            super().__init__(parent, **kw)
+            possible_ports = serialdevice_pyserial.get_ports()
+            self.comport_str = tk.StringVar()
+            self.comport_label = tk.Label(self, text="Com Port",bg='#D9E5EE')
+            self.comport_label.grid(row=0, column=0, sticky='e')
+            self.comport_dropdown = ttk.OptionMenu(self, self.comport_str, possible_ports[0],
+                                            *possible_ports, command = self.comport_handler)
+            self.comport_dropdown.config(width=4)
+            self.comport_dropdown.grid(row=0, column=1, sticky='w', padx=3, ipady=1)
+            self.button_connect = tk.Button(self, text="Connect", bg='light grey',
+                                           command=gparent.connect_button_handler)
+            self.button_connect.grid(row=0, column=2, padx=2, pady=2, sticky=tk.E)
+            self.button_connect.bind('<Return>', gparent.connect_button_handler)
+
+
+        def comport_handler(self, event = None):
+            try:
+                globe.serial_port_num = int(self.comport_str.get())
+            except ValueError: # if there is no comport number there, give up
+                pass
+
+        def populate_comport_menu(self):
+            possible_ports = serialdevice_pyserial.get_ports()
+            self.comport_dropdown.set_menu(possible_ports[0], *possible_ports)
+            n = len(possible_ports)
+            if possible_ports[0] =='':
+                return False
+            else:
+                self.comport_handler()
+                return n > 0
+
+    class TopBar2(tk.Frame):
+        def __init__(self, parent, gparent, **kw):
+            super().__init__(parent, **kw)
+            self.remote_address_str = tk.StringVar()
+            self.address_label = tk.Label(self, text="Address",bg='#D9E5EE')
+            self.address_label.grid(row=0, column=0, sticky='e')
+            self.remote_address_box = tk.Entry(self, textvariable=self.remote_address_str,width=15)
+            self.remote_address_box.grid(row=0, column=1, padx=5,sticky=tk.W)
+            # self.remote_address_box.bind('<Return>', self.remote_address_box_handler)
+            # self.remote_address_box.config(state=tk.DISABLED)
+            self.remote_port_str = tk.StringVar()
+            self.port_label = tk.Label(self, text="Port",bg='#D9E5EE')
+            self.port_label.grid(row=1, column=0, sticky='e')
+            self.remote_port_box = tk.Entry(self, textvariable=self.remote_port_str,width=5)
+            self.remote_port_box.grid(row=1, column=1, padx=5,sticky=tk.W)
+            # self.remote_port_box..bind('<Return>', gparent.connect_button_handler)
+
+            self.remote_address_str.set(globe.remote_address)
+            self.remote_port_str.set(globe.remote_port)
+            self.button_connect = tk.Button(self, text="Connect", bg='light grey',
+                                            command=gparent.connect_button_handler)
+            self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
+            self.button_connect.bind('<Return>', gparent.connect_button_handler)
+
+    class TopBar3(tk.Frame):
+        def __init__(self, parent, gparent, **kw):
+            super().__init__(parent, **kw)
+
+
+            self.password_str = tk.StringVar()
+            self.password_label = tk.Label(self, text="Password",bg='#D9E5EE')
+            self.password_label.grid(row=0, column=0, sticky='e')
+            self.password_box = tk.Entry(self, textvariable=self.password_str,width=15)
+            self.password_box.grid(row=0, column=1, padx=5,sticky=tk.W)
+            self.password_box.bind('<Return>', gparent.connect_button_handler2)
+            self.button_connect = tk.Button(self, text="Connect", bg='light grey',
+                                            command=gparent.connect_button_handler2)
+            self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
+            self.button_connect.bind('<Return>', gparent.connect_button_handler2)
+
+
+    class TopBar0(tk.Frame):
+        def __init__(self, parent, **kw):
+            super().__init__(parent, **kw)
+            self.config(bg = '#D9E5EE')
+            self.rowconfigure(99, weight = 1)
+            self.rowconfigure(0,minsize = 70)
+            self.columnconfigure(0,minsize = 290)
+            self.label1 = tk.Label(self, text = ' ', bg = '#D9E5EE' )
+            self.label1.grid(row=0, column=0, sticky=tk.NS + tk.EW)
+
+
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.parent = parent
@@ -62,17 +147,35 @@ class MainWindow(tk.Frame):
         self.overpower_bypass_b = tk.BooleanVar()
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
+        self.serial_port_b = tk.BooleanVar()
+        self.network_port_b = tk.BooleanVar()
 
         logger.info("creating main window")
         self.terminal_window = terminalwindow.TerminalWindow(self.parent, globe.dev_null)
 
-        tk.Grid.rowconfigure(self, 6, weight =1)
-        tk.Grid.columnconfigure(self, 1, weight=1)
+        self.top_frame = tk.Frame(self,  relief=tk.FLAT,borderwidth=0, bg = '#D9E5EE')
+        self.top_frame.grid(row=0, column=0, sticky=tk.NS + tk.EW)
+
+        self.freq_frame = tk.Frame(self, height=2, width=3,relief=tk.GROOVE,borderwidth=4)
+        self.freq_frame.grid(row=1, column=0, padx=(5,2), pady=5, sticky=tk.N + tk.EW)
+
+        self.mid_frame = tk.Frame(self,relief=tk.FLAT,borderwidth=0)
+        self.mid_frame.grid(row=2, column=0, sticky=tk.NS + tk.EW)
+
+        self.rowconfigure(9,weight=1)  # this row is a spacer
+        tk.Frame(self,relief=tk.FLAT,borderwidth=0).grid(row=9,column=0)
+
+        self.bottom_bar = tk.Frame(self, height=40, borderwidth=5, relief='ridge')
+        self.bottom_bar.grid(row=10, column=0, columnspan='2', sticky=tk.N + tk.S + tk.E + tk.W)
+        self.bottom_bar.columnconfigure(1, weight=1)
+
         self.__create_menus()
-        self.__create_top_bar()
+        self.__fill_top_frame()
         self.__create_freq_frame()
-        self.__create_widgets()
+        self.__fill_mid_frame()
         self._create_bottom_widgets()
+        self.top_bar0.tkraise()
+        self.top_bar1.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
 
 
     def __create_menus(self):
@@ -83,10 +186,19 @@ class MainWindow(tk.Frame):
         self.menu_bar.add_cascade(label='File', menu=file_menu)
         file_menu.add_command(label='Exit', command=exit_handler)
 
+        self.connect_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label='Connection', menu=self.connect_menu)
+        self.connect_menu.add_checkbutton(label="Serial Port", onvalue=1, offvalue=0,
+                         variable=self.serial_port_b, command=self.port_selection_handler1)
+        self.connect_menu.add_checkbutton(label="Network Address", onvalue=1, offvalue=0,
+                         variable=self.network_port_b, command=self.port_selection_handler2)
+
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
-        self.option_menu.add_checkbutton(label="Over power protection", onvalue=1, offvalue=0, variable=self.overpower_bypass_b, command=self.overpower_handler)
-        self.option_menu.add_checkbutton(label="EEPROM write enable", onvalue=1, offvalue=0, variable=self.write_b, command=self.write_handler)
+        self.option_menu.add_checkbutton(label="Over power protection", onvalue=1, offvalue=0,
+                        variable=self.overpower_bypass_b, command=self.overpower_handler)
+        self.option_menu.add_checkbutton(label="EEPROM write enable", onvalue=1, offvalue=0,
+                        variable=self.write_b, command=self.write_handler)
         if ENABLE_LOGGING:
             self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
 
@@ -99,49 +211,42 @@ class MainWindow(tk.Frame):
         about_menu.add_command(label='Help', command=display_help_messagebox)
         about_menu.add_command(label='Terminal', command=self.show_terminal)
 
-    def __create_top_bar(self):
-        possible_ports = serialdevice_pyserial.get_ports()
-        self.top_bar = tk.Frame(self, height=20, background='#D9E5EE')
-        self.top_bar.configure(borderwidth=2, relief='flat')
-        self.top_bar.grid(row=0, column=0, columnspan=2, sticky=tk.E + tk.W)
+    def __fill_top_frame(self):
+        self.top_bar0 = self.TopBar0(self.top_frame, width =290, background='#D9E5EE')
+        self.top_bar0.configure(borderwidth=2, relief='flat')
+        self.top_bar0.grid(row=0, column=0, ipady=5 ,sticky=tk.NS + tk.W)
 
-        style = ttk.Style()
-        style.theme_use('alt')
-        self._comport_str = tk.StringVar()
-        self.comport_label = tk.Label(self.top_bar, text="Com Port",bg='#D9E5EE')
-        self.comport_label.grid(row=0, column=0, sticky='e')
+        self.top_bar1 = self.TopBar1(self.top_frame, gparent=self, background='#D9E5EE')
+        self.top_bar1.configure(borderwidth=2, relief='flat')
+        self.top_bar1.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
 
-        self.comport_dropdown = ttk.OptionMenu(self.top_bar, self._comport_str, possible_ports[0],
-                                               *possible_ports, command = self.comport_handler)
-        self.comport_dropdown.config(width=4)
-        self.comport_dropdown.grid(row=0, column=1, sticky='w', padx=3, ipady=1)
+        self.top_bar2 = self.TopBar2(self.top_frame, gparent=self, background='#D9E5EE')
+        self.top_bar2.configure(borderwidth=2, relief='flat')
+        self.top_bar2.grid(row=0, column=0, ipady =5, sticky=tk.NSEW)
 
-        self.button_connect = tk.Button(self.top_bar, text="Connect", bg='light grey', command=self.connect_button_handler)
-        self.button_connect.grid(row=0, column=2, padx=2, pady=2, sticky=tk.E)
-        self.button_connect.bind('<Return>', self.connect_button_handler)
+        self.top_bar3=self.TopBar3(self.top_frame, gparent=self, background='#D9E5EE')
+        self.top_bar3.configure(borderwidth=2, relief='flat')
+        self.top_bar3.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
 
         photo = tk.PhotoImage(file=const.HEADER_IMAGE)
-        self.image_label = tk.Label(self.top_bar, image=photo, bg = '#D9E5EE')
+        self.image_label = tk.Label(self.top_frame, image=photo, anchor=tk.E, bg = '#D9E5EE')
         self.image_label.photo = photo
-        self.image_label.grid(row=0, column=3, padx = 10, sticky=tk.EW)
+        self.image_label.grid(row=0, column=4,sticky=tk.NS + tk.E)
 
     def __create_freq_frame(self):
-        self.freq_frame = tk.Frame(self, height=2, width=3,relief=tk.GROOVE,borderwidth=4)
-        self.freq_frame.grid(row=2, column=0, rowspan=2,columnspan=3, padx=5, pady=5, sticky=tk.N + tk.EW)
-
-        self.freq_subframe1 = tk.Frame(self.freq_frame,height=1, width = 3)
+        self.freq_subframe1 = tk.Frame(self.freq_frame,height=1, width = 4)
         self.freq_subframe1.grid(row=0, column=0)
-        self.freq_subframe2 = tk.Frame(self.freq_frame,height=1, width = 3)
+        self.freq_subframe2 = tk.Frame(self.freq_frame,height=1, width = 4)
         self.freq_subframe2.grid(row=1, column=0)
 
-        self.start_label = tk.Label(self.freq_subframe1, text="     ", width=12, anchor=tk.W)
+        self.start_label = tk.Label(self.freq_subframe1, text="     ", width=16, anchor=tk.W)
         self.start_label.grid(row=0, column=0, padx=5, sticky=tk.W)
         tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=1, sticky=tk.EW)
         tk.Label(self.freq_subframe1, text="", width=15).grid(row=0, column=2, sticky=tk.EW)
         self.freq_label1 = tk.Label(self.freq_subframe1, text=" FREQUENCY IN MHZ", width=20, state = tk.DISABLED)
         self.freq_label1.grid(row=0, column=2, sticky=tk.EW)
         tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=3, sticky=tk.EW)
-        self.stop_label = tk.Label(self.freq_subframe1, text="     ", width=12,  anchor=tk.E)
+        self.stop_label = tk.Label(self.freq_subframe1, text="     ", width=16,  anchor=tk.E)
         self.stop_label.grid(row=0, column=4, padx=5, sticky=tk.E)
 
         self._freq_s = tk.StringVar()
@@ -159,16 +264,16 @@ class MainWindow(tk.Frame):
         self.rightButton2.grid(row=1, column=5, padx=1, pady=3, sticky='w')
 
 
-    def __create_widgets(self):
-        self.uf_frame = tk.Frame(self, height=1, width=3,  relief=tk.GROOVE, borderwidth=4)
-        self.uf_frame.grid(row=4, column=0, rowspan=1,  padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+    def __fill_mid_frame(self):
+        self.uf_frame = tk.Frame(self.mid_frame, height=1, width=3,  relief=tk.GROOVE, borderwidth=4)
+        self.uf_frame.grid(row=0, column=0, rowspan=1,  padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
-        self.gain_frame = tk.Frame(self, height=1, width=3, relief= tk.GROOVE, borderwidth=4)
+        self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief= tk.GROOVE, borderwidth=4)
         # self.gain_frame.grid(row=5, column=0, rowspan=1,columnspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
-        self.gain_frame.grid(row=5, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.gain_frame.grid(row=1, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
 
-        self.bypass_frame = tk.Frame(self, height=1, width=3,  relief= tk.GROOVE, borderwidth=4)
-        self.bypass_frame.grid(row=6, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.bypass_frame = tk.Frame(self.mid_frame, height=1, width=3,  relief= tk.GROOVE, borderwidth=4)
+        self.bypass_frame.grid(row=2, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self._uf_s = tk.StringVar()
         self.uf_label = tk.Label(self.uf_frame, text="UltraFine tuning", width=16)
@@ -212,15 +317,13 @@ class MainWindow(tk.Frame):
 
 
     def _create_bottom_widgets(self):
-        self.bottom_bar = tk.Frame(self, height=40, borderwidth=5, relief='ridge')
-        self.bottom_bar.grid(row=10, column=0, columnspan='2', sticky=tk.N + tk.S + tk.E + tk.W)
-        self.bottom_bar.columnconfigure(1, weight=1)
         self.status_bar1 = tk.Label(self.bottom_bar, text=' ', font = text_font)
         self.status_bar1.grid(row=0, column=0, columnspan=1, sticky=tk.N + tk.S + tk.W)
         self.status_bar2 = tk.Label(self.bottom_bar, text='  ', font = text_font)
         self.status_bar2.grid(row=0, column=1, columnspan=1, sticky=tk.N + tk.S + tk.W + tk.E)
         self.status_bar3 = tk.Label(self.bottom_bar, text='  ', font = default_font, fg="red")
         self.status_bar3.grid(row=0, column=2, columnspan=1, sticky=tk.N + tk.S + tk.E)
+        self.status_bar1.config(text=".")
 
     def status1(self,msg, **kwargs):
         self.status_bar1.config(text=msg,**kwargs )
@@ -256,6 +359,24 @@ class MainWindow(tk.Frame):
             self.uf_leftButton.config(state=new_state)
             self.uf_rightButton.config(state=new_state)
 
+
+    def port_selection_handler1(self):
+        if self.serial_port_b.get():
+            self.network_port_b.set(False)
+            globe.dut_kind = globe.DUTKind.serial
+            self.top_bar1.tkraise()
+        else:
+            self.network_port_b.set(True)
+            globe.dut_kind = globe.DUTKind.network
+
+    def port_selection_handler2(self):
+        if self.network_port_b.get():
+            self.serial_port_b.set(False)
+            globe.dut_kind = globe.DUTKind.network
+            self.top_bar2.tkraise()
+        else:
+            self.serial_port_b.set(True)
+            globe.dut_kind = globe.DUTKind.serial
 
     # These functions have an optional 'event' parameter because button binding passes an
     # event object to the callback function, but the menu doesn't.
@@ -511,46 +632,30 @@ class MainWindow(tk.Frame):
         self._freq_s.set("{:.6f}".format(f))
 
 
-    def populate_comport_menu(self):
-        global possible_ports
-        possible_ports = serialdevice_pyserial.get_ports()
-        self.comport_dropdown.set_menu(possible_ports[0], *possible_ports)
-        n = len(possible_ports)
-        if possible_ports[0] =='':
-            return False
-        else:
-            self.comport_handler()
-            return n > 0
-
-
-    def comport_handler(self, event = None):
-        try:
-            globe.serial_port_num = int(self._comport_str.get())
-        except Exception:   # if there is no comport number there, give up
-            pass
-
     def connect_button_handler(self, event=None):
         self.status1(" ")
         self.enable_widgets(False)
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
-
-        if self._comport_str.get() == '':
-            if not self.populate_comport_menu():
-                self.status1("Cannot find any com ports. Connect device and try again.")
-            else:
-                self.status1("")
-            return
-        try:
-            port_num = int(self._comport_str.get())
-            self.status1("connecting...")
-            globe.open_dut([port_num], self.terminal_window.textbox,globe.DUTKind.serial)
-        except Exception as e:
-            logger.error(e.__class__)
-            logger.error("Can't open a serial port\n")
-            self.terminal_window.textbox.append("Couldn't open the serial port\n")
-            self.status1("Cannot connect to a device on that port")
-            return
+        if globe.dut_kind == globe.DUTKind.network:
+            pass
+        else:
+            if self.top_bar1.comport_str.get() == '':
+                if not self.top_bar1.populate_comport_menu():
+                    self.status1("Cannot find any com ports. Connect device and try again.")
+                else:
+                    self.status1("")
+                return
+            try:
+                port_num = int(self.top_bar1.comport_str.get())
+                self.status1("connecting...")
+                globe.open_dut([port_num], self.terminal_window.textbox,globe.DUTKind.serial)
+            except Exception as e:
+                logger.error(e.__class__)
+                logger.error("Can't open a serial port\n")
+                self.terminal_window.textbox.append("Couldn't open the serial port\n")
+                self.status1("Cannot connect to a device on that port")
+                return
         # would dut be None if it had been disconnected? No.
         if globe.dut is None:
             self.status1("Cannot connect to device on that port")
@@ -596,17 +701,18 @@ class MainWindow(tk.Frame):
 
 
     def poll_for_overpower_bypass(self):
-        if self.overpower_bypass_b.get():
-            if globe.dut is not None:
-                if globe.dut.port.is_open():
-                    op = globe.dut.get_overpower_status()
-                    if op:
-                        self.status_bar3.config(text = "OVER POWER BYPASS")
-                    else:
-                        self.status_bar3.config(text = "")
-        else:
-            self.status_bar3.config(text = "")
-        self.after(1000, self.poll_for_overpower_bypass)
+        pass
+        # if self.overpower_bypass_b.get():
+        #     if globe.dut is not None:
+        #         if globe.dut.port.is_open():
+        #             op = globe.dut.get_overpower_status()
+        #             if op:
+        #                 self.status_bar3.config(text = "OVER POWER BYPASS")
+        #             else:
+        #                 self.status_bar3.config(text = "")
+        # else:
+        #     self.status_bar3.config(text = "")
+        # self.after(poll_timing, self.poll_for_overpower_bypass)
 
 
 def user_interrupt_handler(event=None):
@@ -658,7 +764,7 @@ def set_root_size():
     set the dimensions of the window and where it is placed
     must be done after creating the MainWindow
     """
-    root_width = 500
+    root_width = 550
     root_height = 450
     root_x = (root.winfo_screenwidth() / 2) - (root_width / 2)
     root_y = (root.winfo_screenheight() / 2) - (root_height / 2)
@@ -691,7 +797,7 @@ root.iconbitmap(const.ICON_FILE)
 root.bind_all('<Escape>', user_interrupt_handler)
 root.bind('<KeyPress-F1>', display_help_messagebox)
 root.protocol('WM_DELETE_WINDOW', exit_handler)  # override the Windows "X" button
-app.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
+# app.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
 
 root.mainloop()
 
