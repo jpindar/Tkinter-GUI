@@ -74,15 +74,19 @@ class TextBox(tkst.ScrolledText):
         return 'break'
 
     def append(self, msg):
-        if msg is not None:
-            if msg[-1] == '\r':
-                msg += '\n'
-            # logger.info("appending <" + msg + ">")
-            self.insert(tk.END, msg)
-            self.see(tk.END)
-            self.update()
-            globe.unsaved = True
-            self.parent.unsaved_text = True
+        if msg is None:
+            return
+        if msg == '':
+            return
+        if msg[-1] not in '\r\n':
+            msg += '\r'
+        if msg[-1] == '\r':
+            msg += '\n'
+        self.insert(tk.END, msg)
+        self.see(tk.END)
+        self.update()
+        globe.unsaved = True
+        self.parent.unsaved_text = True
 
     def clear(self):
         self.tag_add('sel', '1.0', 'end')
