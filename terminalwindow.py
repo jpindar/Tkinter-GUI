@@ -5,6 +5,7 @@ Date: Sep-2017
 Version: 1.1
 Author: jeannepindar@gmail.com AKA jpindar@jpindar.com
 """
+ENABLE_LOGGING = False
 
 __author__ = 'jeannepindar@gmail.com'
 import logging
@@ -30,6 +31,21 @@ class TextBox(tkst.ScrolledText):
         # fix control-Y binding - tkinter's default is weird, apparently for historical reasons
         self.bind('<Control-y>', self.redo)  # handling Ctrl + lowercase y
         self.bind('<Control-Y>', self.redo)  # handling Ctrl + uppercase y
+        self.menu_bar = tk.Menu(self)
+        self.parent.config(menu=self.menu_bar)
+        self.logging_b = tk.BooleanVar()
+        if ENABLE_LOGGING:
+            self.option_menu = tk.Menu(self, tearoff=0)
+            self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
+            self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0,
+                                             variable=self.logging_b, command=self.logging_handler)
+
+    def logging_handler(self): # TODO test this
+        b = self.logging_b.get()
+        if b:
+            logging.disable(logging.NOTSET)
+        else:
+            logging.disable(999)
 
     def __create_context_menu(self):
         self.context_menu = tk.Menu(self, tearoff='no')
