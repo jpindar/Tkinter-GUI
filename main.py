@@ -21,12 +21,13 @@ ENABLE_LOGGING = False
 log_filename = 'Ultra-Q.log'
 logger = logging.getLogger(__name__)
 if ENABLE_LOGGING:
-    if __name__ == "__main__":
-        logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
-                            level=logging.INFO)
+    logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
+                        level=logging.INFO)
     # logger.setLevel(logging.CRITICAL)
+    # logging.disable(logging.NOTSET)
 else:
     logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
+
 logger.info("testing logger")
 import time
 import os
@@ -43,8 +44,9 @@ import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
-const.VERSION = "v1.05"
-const.BUILD = "1.05.0"
+# v1.06 for dBSpectra
+const.VERSION = "v1.06"
+const.BUILD = "1.06.1"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
@@ -140,6 +142,7 @@ class MainWindow(tk.Frame):
         self.overpower_bypass_b = tk.BooleanVar()
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
+        self.fast_baud_b = tk.BooleanVar()
         self.serial_port_b = tk.BooleanVar()
         self.network_port_b = tk.BooleanVar()
 
@@ -186,6 +189,8 @@ class MainWindow(tk.Frame):
                         variable=self.overpower_bypass_b, command=self.overpower_handler)
         self.option_menu.add_checkbutton(label="EEPROM write enable", onvalue=1, offvalue=0,
                         variable=self.write_b, command=self.write_handler)
+        self.option_menu.add_checkbutton(label="115200 baud", onvalue=1, offvalue=0,
+                        variable=self.fast_baud_b, command=self.fast_baud_handler)
         if ENABLE_LOGGING:
             self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
 
@@ -319,6 +324,7 @@ class MainWindow(tk.Frame):
             new_state = tk.DISABLED
         self.option_menu.entryconfig(0, state=new_state)
         self.option_menu.entryconfig(1, state=new_state)
+        self.option_menu.entryconfig(2, state=tk.NORMAL)  # always enabled
         self.freq_box.config(state=new_state)
         self.freq_label1.config(state=new_state)
         self.start_label.config(state=new_state)
@@ -500,6 +506,37 @@ class MainWindow(tk.Frame):
             return
         self.write_b.set(r)
 
+
+    def fast_baud_handler(self, event=None):
+        """
+        this is awkward
+        """
+        try:
+            s = self.fast_baud_b.get()
+        except ValueError as e:
+            logger.warning(e.__class__)
+            logger.warning("value error in fast_baud_handler")
+            return
+        if s:
+            b = 1
+            serialdevice_pyserial.baud_rate = 115200  # seems weird to define these here...
+        else:
+            b = 0
+            serialdevice_pyserial.baud_rate = 19200
+        logger.info("setting the fast_baud to " + str(b))
+        try:
+            if globe.dut is not None:
+                globe.dut.set_baud(b)
+        except bbuq.UltraQResponseError as e:
+            self.status1("Bad or no response from device")
+            return
+        except Exception as e:
+            pass
+        # except bbuq.UltraQLoggedOutError as e:
+        #    self.status1("Not Connected to Device")
+        #    return
+        # self.fast_baud_b.set(b)
+
     def ufmode_handler(self, event=None):
         s = None
         try:
@@ -589,7 +626,7 @@ class MainWindow(tk.Frame):
             self.status1("Not Connected to Device")
             return
         else:
-            self.status1("")
+            # self.status1("")
             self._freq_s.set("{:.6f}".format(f2))
 
 
@@ -708,7 +745,7 @@ class MainWindow(tk.Frame):
             self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
             self.write_b.set(globe.dut.get_write())
             # let the UF wait til other widgets are being enabled, looks bad to do it first
-            uf_mode = globe.dut.get_uf_mode() # TODO this once got called when globe.dut was None, can't replicate
+            uf_mode = globe.dut.get_uf_mode()
             self._ufmode_i.set(uf_mode)
             uf_setting = globe.dut.get_ultrafine()
             self._uf_s.set(str(uf_setting))
@@ -746,6 +783,7 @@ def show_terminal():
     app.terminal_window.textbox.clear()
     app.terminal_window.deiconify()
 
+
 def user_interrupt_handler(event=None):
     globe.user_interrupt = True
     return 'break'
@@ -753,7 +791,7 @@ def user_interrupt_handler(event=None):
 
 def display_about_messagebox(event=None):
     about_string = const.PROGRAM_NAME + " " + const.VERSION + "\n"
-    about_string += " TelGaAs Inc.\n" + " telgaas.com \n"
+    about_string += "TelGaAs Inc.\n" + " telgaas.com \n\n"
     about_string += __author__ + "\n"
     tmb.showinfo("About " + const.PROGRAM_NAME, about_string, icon=tmb.INFO)
     return 'break'
@@ -762,7 +800,8 @@ def display_about_messagebox(event=None):
 def display_help_messagebox(event=None):
     help_string = "Contact TelGaAs Inc. at telgaas.com for help\n\n"
     help_string += "USB drivers for Ultra-Q filters are available at \n"
-    help_string += "http://www.ftdichip.com/Drivers/VCP.htm"
+    help_string += "http://www.ftdichip.com/Drivers/VCP.htm\n\n"
+    help_string += "This program operates at 19200 baud except when the 115200 baud option is selected."
     tmb.showinfo("Help", help_string, icon=tmb.INFO)
     return 'break'
 
