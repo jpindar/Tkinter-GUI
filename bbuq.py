@@ -11,6 +11,7 @@ __author__ = 'jpindar@jpindar.com'
 
 import logging
 logger = logging.getLogger(__name__)
+from time import sleep
 import string
 import globe
 import serialdevice_pyserial
@@ -79,6 +80,7 @@ class UltraQ:
          all methods like self.port.open_port(connection)
          should close the port (if it exists and is open) before opening it
         """
+        assert isinstance(connection, list)
         self.kind = kind
         self.connection = connection
         self.exists = False
@@ -112,6 +114,7 @@ class UltraQ:
             try:
                 self.port = socketdevice.SocketDevice()  # just a dumb constructor
                 success = self.port.open_port(self.connection)   # this is what actually does something
+                sleep(0.5) # because calling write immediately after opening the socket doesn't always work
             except OSError as e:
                 logger.warning(e.__class__)    # TimeoutError
                 logger.warning(e.__doc__)      # "Timeout expired"
@@ -152,13 +155,14 @@ class UltraQ:
 
             if correct_id(s):  # we are logged in
                 break
-            # TODO this should also be in a try block
-            if s == 'password:':
-                self.port.write(globe.password + '\r')
-                s = self.port.read()
-                if s[:3] == 'bad':
-                    self.output.append(s)
-                    break
+            if self.kind == globe.DUTKind.network:
+                # TODO this should also be in a try block
+                if s == 'password:':
+                    self.port.write(globe.password + '\r')
+                    s = self.port.read()
+                    if s[:3] == 'bad':
+                        self.output.append(s)
+                        break
 
         if correct_id(s):
             self.exists = True
@@ -476,8 +480,6 @@ class UltraQ:
 
 
 
-
-
 #     #### methods that essentially just call another method
 
     def get_nominal_gain(self):
@@ -491,6 +493,8 @@ class UltraQ:
                 return 1.0
             return g
 
+    def get_agc(self):
+        return self.get_any_boolean("AGC?\r")
 
     def get_attn_step(self):
         return self.get_any_attn("ATT STEP?\r")
@@ -515,7 +519,7 @@ class UltraQ:
         return self.get_any_freq("LOFREQ?\r")
 
     def get_lock(self):
-       # string instead of boolean cuz it can be handy to get debug info this way
+        # string instead of boolean cuz it can be handy to get debug info this way
         return self.get_any_string("LOCK?\r")
 
 
@@ -529,25 +533,33 @@ class UltraQ:
 
 
     def set_bypass(self, b):
-        self.set_any_boolean("BYPASS ", b)
+        self.set_any_boolean("BYPASS", b)
 
 
     def get_overpower_bypass_enable(self):
         # TODO make this deal gracefully (return False) with units that have no overpower bypass
-        if float(self.revision) < 2.02:
-            r = self.get_any_boolean("OVERPOWERBYPASS?\r")
-        else:
-            r = self.get_any_boolean("OVERPOWERBYPASSENABLE?\r")
+        try:
+            if float(self.revision) < 2.02:
+                r = self.get_any_boolean("OVERPOWERBYPASS?\r")
+            else:
+                r = self.get_any_boolean("OVERPOWERBYPASSENABLE?\r")
+        except UltraQError as e:
+            return False
         if r is None:
             return False
         return r
 
     def set_overpower_bypass_enable(self, b):
         # TODO make this deal gracefully with units that have no overpower bypass
-        if float(self.revision) < 2.02:
-            self.set_any_boolean("OVERPOWERBYPASS", b)
-        else:
-            self.set_any_boolean("OVERPOWERBYPASSENABLE", b)
+        try:
+            if float(self.revision) < 2.02:
+                self.set_any_boolean("OVERPOWERBYPASS", b)
+            else:
+                self.set_any_boolean("OVERPOWERBYPASSENABLE", b)
+        except UltraQError as e:
+            pass
+
+
 
     def get_write(self):
         r = self.get_any_boolean("SAVESTATE?\r")
@@ -558,11 +570,14 @@ class UltraQ:
     def set_write(self, b):
         return self.set_any_boolean("SAVESTATE", b)
 
+    def set_baud(self, b):
+        return self.set_any_boolean("BAUD", b)
+
     def get_uf_mode(self):
         return self.get_any_boolean("UFCM?\r")
 
     def set_uf_mode(self, b):
-        self.set_any_boolean("UFCM ", b)
+        self.set_any_boolean("UFCM", b)
 
 
     def get_gain(self):
