@@ -52,6 +52,8 @@ poll_timing = 1000
 
 class MainWindow(tk.Frame):
     """
+    Note that all of the TopBarN frames overlay each other, and the one we
+    want to be active at any time is brought to the top
     """
     major_freq_increment = 1
     minor_freq_increment = 0.0025
@@ -106,15 +108,8 @@ class MainWindow(tk.Frame):
             self.remote_address_box.grid(row=0, column=1, padx=5,sticky=tk.W)
             # self.remote_address_box.bind('<Return>', self.remote_address_box_handler)
             # self.remote_address_box.config(state=tk.DISABLED)
-            self.remote_port_str = tk.StringVar()
-            self.port_label = tk.Label(self, text="Port",bg='#D9E5EE')
-            self.port_label.grid(row=1, column=0, sticky='e')
-            self.remote_port_box = tk.Entry(self, textvariable=self.remote_port_str,width=5)
-            self.remote_port_box.grid(row=1, column=1, padx=5,sticky=tk.W)
             # self.remote_port_box..bind('<Return>', gparent.connect_button_handler)
-
             self.remote_address_str.set(globe.remote_address)
-            self.remote_port_str.set(globe.remote_port)
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
                                             command=gparent.connect_button_handler)
             self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
@@ -123,8 +118,6 @@ class MainWindow(tk.Frame):
     class TopBar3(tk.Frame):
         def __init__(self, parent, gparent, **kw):
             super().__init__(parent, **kw)
-
-
             self.password_str = tk.StringVar()
             self.password_label = tk.Label(self, text="Password",bg='#D9E5EE')
             self.password_label.grid(row=0, column=0, sticky='e')
@@ -137,15 +130,6 @@ class MainWindow(tk.Frame):
             self.button_connect.bind('<Return>', gparent.connect_button_handler2)
 
 
-    class TopBar0(tk.Frame):
-        def __init__(self, parent, **kw):
-            super().__init__(parent, **kw)
-            self.config(bg = '#D9E5EE')
-            self.rowconfigure(99, weight = 1)
-            self.rowconfigure(0,minsize = 70)
-            self.columnconfigure(0,minsize = 290)
-            self.label1 = tk.Label(self, text = ' ', bg = '#D9E5EE' )
-            self.label1.grid(row=0, column=0, sticky=tk.NS + tk.EW)
 
 
     def __init__(self, parent, **kwargs):
@@ -195,12 +179,6 @@ class MainWindow(tk.Frame):
         self.menu_bar.add_cascade(label='File', menu=file_menu)
         file_menu.add_command(label='Exit', command=exit_handler)
 
-        self.connect_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label='Connection', menu=self.connect_menu)
-        self.connect_menu.add_checkbutton(label="Serial Port", onvalue=1, offvalue=0,
-                         variable=self.serial_port_b, command=self.port_selection_handler1)
-        self.connect_menu.add_checkbutton(label="Network Address", onvalue=1, offvalue=0,
-                         variable=self.network_port_b, command=self.port_selection_handler2)
 
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
@@ -647,16 +625,11 @@ class MainWindow(tk.Frame):
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
         if globe.dut_kind == globe.DUTKind.network:
-            try:
                 globe.remote_address = self.top_bar2.remote_address_str.get()
                 globe.remote_port = self.top_bar2.remote_port_str.get()
                 self.top_bar3.tkraise()
                 self.top_bar3.password_box.focus_set()
                 return   # go wait for user to enter password and click again
-            except Exception as e:
-                logger.error(e.__class__)
-                self.status1("Cannot connect to a device at that address")
-                return
         else:
             if self.top_bar1.comport_str.get() == '':
                 if not self.top_bar1.populate_comport_menu():
