@@ -413,6 +413,19 @@ class UltraQ:
     #         raise UltraQLoggedOutError("LoggedOut",r)
     #     return r
 
+    def get_max_step(self):
+        msg = "MAX STEP?\r"
+        logger.info('sending ' + msg)
+        self.output.append(msg + '\n')
+        self.port.write(msg)
+        r = self.port.read()
+        logger.info('got <' + str(r) + '>')
+        self.output.append(r)
+        if 'password' in r:
+            raise UltraQLoggedOutError("LoggedOut",r)
+        if r is None:
+            raise UltraQError("None", "Bad response: None")
+        return r
 
     def get_overpower_status(self):
         msg = "OVERPOWER?\r"
@@ -583,19 +596,10 @@ class UltraQ:
     def get_detector_a(self):
         return self.get_any_detector("DETA?\r")
 
-    def get_max_step(self):
-        msg = "MAX STEP?\r"
-        logger.info('sending ' + msg)
-        self.output.append(msg + '\n')
-        self.port.write(msg)
-        r = self.port.read()
-        logger.info('got <' + str(r) + '>')
-        self.output.append(r)
-        if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut",r)
-        if r is None:
-            raise UltraQError("None", "Bad response: None")
-        return r
 
+# class BBUQ(UltraQ):
+#     """my specific kind of Ultra-Q"""
+#    def __init___(self, connection, output, kind):
+#        super().__init__(connection, output, kind)
 
 
