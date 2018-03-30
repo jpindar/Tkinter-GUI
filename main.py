@@ -111,9 +111,9 @@ class MainWindow(tk.Frame):
             # self.remote_port_box..bind('<Return>', gparent.connect_button_handler)
             self.remote_address_str.set(globe.remote_address)
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
-                                            command=gparent.connect_button_handler)
+                                            command=gparent.connect_button_handler2)
             self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
-            self.button_connect.bind('<Return>', gparent.connect_button_handler)
+            self.button_connect.bind('<Return>', gparent.connect_button_handler2)
 
     class TopBar3(tk.Frame):
         def __init__(self, parent, gparent, **kw):
@@ -125,9 +125,9 @@ class MainWindow(tk.Frame):
             self.password_box.grid(row=0, column=1, padx=5,sticky=tk.W)
             self.password_box.bind('<Return>', gparent.connect_button_handler2)
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
-                                            command=gparent.connect_button_handler2)
+                                            command=gparent.connect_button_handler3)
             self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
-            self.button_connect.bind('<Return>', gparent.connect_button_handler2)
+            self.button_connect.bind('<Return>', gparent.connect_button_handler3)
 
 
 
@@ -167,7 +167,7 @@ class MainWindow(tk.Frame):
         self.__fill_freq_frame()
         self.__fill_mid_frame()
         self.__fill_bottom_bar()
-        self.top_bar0.tkraise()
+        self.top_bar1.tkraise()
         self.top_bar1.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
 
 
@@ -199,20 +199,16 @@ class MainWindow(tk.Frame):
         about_menu.add_command(label='Terminal', command=show_terminal)
 
     def __fill_top_frame(self):
-        self.top_bar0 = self.TopBar0(self.top_frame, width =290, background='#D9E5EE')
-        self.top_bar0.configure(borderwidth=2, relief='flat')
-        self.top_bar0.grid(row=0, column=0, ipady=5 ,sticky=tk.NS + tk.W)
+        self.top_bar1=self.TopBar1(self.top_frame, gparent=self,width =290, background='#D9E5EE')
+        self.top_bar2=self.TopBar2(self.top_frame, gparent=self,width =290, background='#D9E5EE')
+        self.top_bar3=self.TopBar3(self.top_frame, gparent=self,width =290, background='#D9E5EE')
 
-        self.top_bar1 = self.TopBar1(self.top_frame, gparent=self, background='#D9E5EE')
         self.top_bar1.configure(borderwidth=2, relief='flat')
-        self.top_bar1.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
-
-        self.top_bar2 = self.TopBar2(self.top_frame, gparent=self, background='#D9E5EE')
         self.top_bar2.configure(borderwidth=2, relief='flat')
-        self.top_bar2.grid(row=0, column=0, ipady =5, sticky=tk.NSEW)
-
-        self.top_bar3=self.TopBar3(self.top_frame, gparent=self, background='#D9E5EE')
         self.top_bar3.configure(borderwidth=2, relief='flat')
+
+        self.top_bar1.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
+        self.top_bar2.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
         self.top_bar3.grid(row=0, column=0, ipady=5, sticky=tk.NSEW)
 
         photo = tk.PhotoImage(file=const.HEADER_IMAGE)
@@ -619,18 +615,20 @@ class MainWindow(tk.Frame):
         self._freq_s.set("{:.6f}".format(f))
 
 
+
+
     def connect_button_handler(self, event=None):
         self.status1(" ")
         self.enable_widgets(False)
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
-        if globe.dut_kind == globe.DUTKind.network:
-                globe.remote_address = self.top_bar2.remote_address_str.get()
-                globe.remote_port = self.top_bar2.remote_port_str.get()
-                self.top_bar3.tkraise()
-                self.top_bar3.password_box.focus_set()
-                return   # go wait for user to enter password and click again
+        if self.top_bar1.comport_str.get() == 'network':
+            globe.dut_kind = globe.DUTKind.network
+            self.top_bar2.tkraise()
+            # TODO should we set the focus?
+            return   # go wait for user to enter password and click again
         else:
+            globe.dut_kind = globe.DUTKind.serial
             if self.top_bar1.comport_str.get() == '':
                 if not self.top_bar1.populate_comport_menu():
                     self.status1("Cannot find any com ports. Connect device and try again.")
@@ -638,9 +636,9 @@ class MainWindow(tk.Frame):
                     self.status1("")
                 return
             try:
-                port_num = int(self.top_bar1.comport_str.get())
+                s = self.top_bar1.comport_str.get()
                 self.status1("connecting...")
-                globe.open_dut([port_num], self.terminal_window.textbox,globe.DUTKind.serial)
+                globe.open_dut([s], self.terminal_window.textbox,globe.DUTKind.serial)
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("Can't open a serial port\n")
@@ -652,14 +650,25 @@ class MainWindow(tk.Frame):
             self.status1("Cannot connect to device on that port")
             return
         self.refresh_gui()
+        # self.eeprom_dump()
 
     def connect_button_handler2(self, event=None):
-        self.enable_widgets(False)
-        if globe.dut is not None:
-            globe.close_dut()  # this sets globe.dut to None
+        globe.remote_address = self.top_bar2.remote_address_str.get()
+        s2 = globe.remote_address.find('http:') # it's not http, but some people type this by accident
+        if s2>=0:
+            globe.remote_address = globe.remote_address[7:]
+
+        s2 = globe.remote_address.find(':')
+        if s2>0:
+            globe.remote_host = globe.remote_address[:s2]
+            globe.remote_port = globe.remote_address[s2+1:]
+        # else use the default
+        self.top_bar3.tkraise()
+        self.top_bar3.password_box.focus_set()
+
+
+    def connect_button_handler3(self, event=None):
         try:
-            globe.remote_address = self.top_bar2.remote_address_str.get()
-            globe.remote_port = self.top_bar2.remote_port_str.get()
             globe.password = self.top_bar3.password_str.get()
             self.status1("Connecting to device at " + globe.remote_address + ':' + globe.remote_port)
             globe.open_dut([globe.remote_address, globe.remote_port], app.terminal_window.textbox, kind = globe.DUTKind.network)
@@ -669,7 +678,7 @@ class MainWindow(tk.Frame):
             app.terminal_window.textbox.append("Couldn't open the socket\n")
             self.status1("Cannot connect to a device")
             self.top_bar3.password_str.set("")
-            self.top_bar2.tkraise()
+            self.top_bar1.tkraise()
             return
         finally:
             self.top_bar3.password_str.set("")
@@ -679,6 +688,8 @@ class MainWindow(tk.Frame):
             self.status1("Cannot connect to device")
             return
         self.refresh_gui()
+        self.status1("Connected to device at " + globe.remote_address)  # TODO put IP address in title bar?
+
 
     def refresh_gui(self):
         uf_mode = None
