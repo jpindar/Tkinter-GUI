@@ -160,7 +160,10 @@ class TerminalWindow(tk.Toplevel):
             globe.dut.port.write(msg + '\r')
             self.send_box.select_range(0, tk.END)
             self.textbox.append(msg + '\r\n')
-            self.textbox.append(globe.dut.port.read())
+            try:
+                self.textbox.append(globe.dut.port.read())
+            except Exception as e:
+                pass
             if msg not in self.send_list:
                 self.send_list.insert(0, msg)
                 self.send_box['values'] = self.send_list
