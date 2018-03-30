@@ -34,8 +34,8 @@ class DUTKind(Enum):
     network = 2
 
 dut_kind = DUTKind.serial
-remote_address = '10.0.0.10'
-remote_port = '2101'
+remote_port = '2101'  # default value, can be overridden
+remote_address = ''
 password = ''
 password_length = 16 # arbitrary, but same as firmware
 
