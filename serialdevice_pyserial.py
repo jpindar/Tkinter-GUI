@@ -26,11 +26,11 @@ def get_ports():
     possible_ports = serial.tools.list_ports.comports()
     ports = []
     for i in possible_ports:
-        s = str(i.device) +'*'+str(i.description)+'*'+str(i.hwid)
+        s = str(i.device) +' '+str(i.description)+' '+str(i.hwid)
         logger.info(s)
         s = i.device   # something like 'COM4'
-        ports.append(int(s[3:]))  # from position 3 to the end
-    logger.info(str(ports))
+        ports.append(int(s[3:]))  # from position 3 to the end, to handle multi-digit port numbers
+    logger.info("ports reported by pySerial:" + str(ports))
     if (ports is None) or (ports == []):
         return ['']
     return ports
