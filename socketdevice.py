@@ -40,16 +40,24 @@ class SocketDevice:
          opens the port with fixed parameters in connection_info
          remote_host is an IP address in string form
          remote_port is an integer
+         these are separated by a colon
         """
         self.close_port()
         self.remote_host = connection_info[0]
         self.remote_port = connection_info[1]
+        s2 = self.remote_host.find(':')
+        if s2>0:
+            self.remote_port = self.remote_host[s2+1:]
+            self.remote_host = self.remote_host[:s2]
         port_name = str(self.remote_host) + ':' + str(self.remote_port)
         logger.info("opening TCP socket " + port_name)
+        dt = socket.getdefaulttimeout()
+        # socket.setdefaulttimeout()
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            t = self.sock.gettimeout()
             self.sock.connect((self.remote_host, int(self.remote_port)))   # the apparently redundant parenthesis are not redundant
-            self.exists = True
+            self.exists = True # TODO  set timeout, default is too long
         except OSError as e:
             # logger.warning("could not create the socket\r\n")
             logger.warning("could not connect the socket\r\n")
