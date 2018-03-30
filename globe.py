@@ -61,14 +61,22 @@ def close_dut():
 def open_dut(connection, output, kind):
     """
     connection info is a list of either a com port number or an ip address and port
-    output is sonething with an .append(string) method
+    output is something with an .append(string) method
     kind is a enum of DUTKind
     """
     global dut
     global serial_port_num
 
+    assert isinstance(connection, list)
+    # TODO should this parsing be in a try?
     if kind == DUTKind.serial or kind == DUTKind.mock:
-        serial_port_num = connection[0]
+        if isinstance(connection[0], str):
+            if connection[0][:4]=='COM:':
+                connection[0] = int(connection[0][4:])
+            else:
+                if connection[0][:3]=='COM':
+                    connection[0] = int(connection[0][3:])
+        serial_port_num = int(connection[0])
     if dut is None:
         try:
             dut = bbuq.UltraQ(connection, output, kind)
