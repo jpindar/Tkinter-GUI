@@ -56,17 +56,17 @@ class MainWindow(tk.Frame):
     major_freq_increment = 1
     minor_freq_increment = 0.0025
 
+
     class TopBar1(tk.Frame):
         def __init__(self, parent, gparent,**kw):
             super().__init__(parent, **kw)
-            possible_ports = serialdevice_pyserial.get_ports()
             self.comport_str = tk.StringVar()
-            self.comport_label = tk.Label(self, text="Com Port",bg='#D9E5EE')
-            self.comport_label.grid(row=0, column=0, sticky='e')
-            self.comport_dropdown = ttk.OptionMenu(self, self.comport_str, possible_ports[0],
-                                            *possible_ports, command = self.comport_handler)
-            self.comport_dropdown.config(width=4)
-            self.comport_dropdown.grid(row=0, column=1, sticky='w', padx=3, ipady=1)
+            self.comport_label = tk.Label(self, text="Connection",bg='#D9E5EE')
+            self.comport_label.grid(row=0, column=0, sticky=tk.E)
+            self.comport_dropdown = ttk.OptionMenu(self, self.comport_str, command = self.comport_handler)
+            self.comport_dropdown.config(width=8)
+            self.comport_dropdown.grid(row=0, column=1, sticky=tk.W, padx=3, ipady=1)
+            self.populate_comport_menu()
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
                                            command=gparent.connect_button_handler)
             self.button_connect.grid(row=0, column=2, padx=2, pady=2, sticky=tk.E)
@@ -75,12 +75,19 @@ class MainWindow(tk.Frame):
 
         def comport_handler(self, event = None):
             try:
-                globe.serial_port_num = int(self.comport_str.get())
+                s = self.comport_str.get()
+                if s[:3] == 'COM':
+                    globe.serial_port_num = int(s[3:])
             except ValueError: # if there is no comport number there, give up
                 pass
 
         def populate_comport_menu(self):
             possible_ports = serialdevice_pyserial.get_ports()
+            if possible_ports[0] != '':
+                possible_ports = ["COM" + str(p) for p in possible_ports]
+                possible_ports.append('network')
+            else:
+                possible_ports[0]='network'
             self.comport_dropdown.set_menu(possible_ports[0], *possible_ports)
             n = len(possible_ports)
             if possible_ports[0] =='':
