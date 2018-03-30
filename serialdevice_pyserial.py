@@ -15,6 +15,10 @@ import serial.tools.list_ports
 # from serial.tools.list_ports import comports
 
 read_delay = 0.2
+baud_rate = 19200 # normal, don't change this
+# baud_rate = 115200  # works
+# baud_rate = 230400  # works
+# baud_rate = 460800  # doesn't work reliably
 
 
 # noinspection PySimplifyBooleanCheck
@@ -60,7 +64,7 @@ class SerialDevice:
         opens a serial port
         connection_info[0] should be an integer, 0 meaning COM1, etc
         returns True if it succeeded, False if there was an error
-        :param connection_info: a list, 0th element is an integer
+        :param connection: a list, 0th element is an integer
         :return: boolean
         """
         self.close_port()
@@ -68,10 +72,6 @@ class SerialDevice:
         port_name = "COM" + str(self.port_num)
         logger.info("opening serial port " + port_name)
         try:
-            baud_rate = 19200 # normal, don't change this
-            # baud_rate = 115200  # works
-            # baud_rate = 230400  # works
-            # baud_rate = 460800  # doesn't work reliably
             self.comPort = serial.Serial(port=port_name,
                                          baudrate=baud_rate,
                                          parity=serial.PARITY_NONE,
