@@ -8,7 +8,7 @@
 ### What else do I need ###
 
 Python 3.4 (We're sticking with 3.4 since that's the last version that works with WinXP, and some customers still use XP.)  
-TKinter (This is already part of most Python installs.)
+TKinter (This is already part of most Python installs.)  
 PySerial (https://pypi.python.org/pypi/pyserial)
 
 ### How do I get set up? ###
