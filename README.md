@@ -2,8 +2,9 @@
 
 ### What is this repository for? ###
 
-* A desktop GUI provided for our customers to control their BBUQ (a variant of the Ultra-Q filter).
-* Version 1
+BBUQGUI is a desktop GUI provided for our customers to control their BBUQ (a variant of the Ultra-Q filter).
+
+Copyright TelGaAS Inc. 2018
 
 ### What else do I need ###
 
@@ -24,5 +25,6 @@ Run pyinstaller <name of spec file>
 
 ### Who do I talk to? ###
 
-* jpindar@jpindar.com  aka jeannepindar@gmail.com
-* TelGaAs Inc.
+written by jpindar@jpindar.com  aka jeannepindar@gmail.com
+
+copyright TelGaAs Inc.  http://telgaas.com/
