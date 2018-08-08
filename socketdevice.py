@@ -27,7 +27,6 @@ class SocketDevice:
         logger.info("SocketDevice constructor")
         self.exists = False
         self.comPort = None
-        self.friendly_name = "TCP socket"
         self.port_num = None
         self.sock = None
         self.remote_host = None
@@ -41,6 +40,9 @@ class SocketDevice:
          remote_host is an IP address in string form
          remote_port is an integer
          these are separated by a colon
+
+          TODO  set timeout, default is too long?, ideally make this configurable
+
         """
         self.close_port()
         self.remote_host = connection_info[0]
@@ -57,7 +59,7 @@ class SocketDevice:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # t = self.sock.gettimeout()
             self.sock.connect((self.remote_host, int(self.remote_port)))   # the apparently redundant parenthesis are not redundant
-            self.exists = True # TODO  set timeout, default is too long
+            self.exists = True
         except OSError as e:
             # logger.warning("could not create the socket\r\n")
             logger.warning("could not connect the socket\r\n")
@@ -86,6 +88,7 @@ class SocketDevice:
             logger.info("SocketDevice.openPort: opened a " + str(self.sock.__class__))
             self.exists = True
             return True
+
 
     def is_open(self):
         """
@@ -141,10 +144,7 @@ class SocketDevice:
         potential_errs = [self.sock]
         timeout = 10
         ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
-        if self.sock in ready_to_read:
-            return True
-        else:
-            return False
+        return bool(self.sock in ready_to_read)
 
     def is_ready_to_write(self):
         potential_readers = [self.sock]
@@ -152,10 +152,7 @@ class SocketDevice:
         potential_errs = [self.sock]
         timeout = 10
         ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
-        if self.sock in ready_to_write:
-            return True
-        else:
-            return False
+        return bool(self.sock in ready_to_write)
 
     def is_in_error(self):
         potential_readers = [self.sock]
@@ -163,10 +160,7 @@ class SocketDevice:
         potential_errs = [self.sock]
         timeout = 10
         ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
-        if self.sock in in_error:
-            return True
-        else:
-            return False
+        return bool(self.sock in in_error)
 
     def read(self):
         """
