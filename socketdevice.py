@@ -13,6 +13,17 @@ __author__ = 'jpindar@jpindar.com'
 read_delay = 0.2
 
 
+def parse_url(connection_info):
+    # The url shouldn't be http, but some people copy & paste this by accident
+    # s2 = connection_info[0].find('http:\\')
+    # if s2>=0:
+    #     connection_info[0] = connection_info[0][7:] # skip http:\\
+    #
+    s2 = connection_info[0].find(':')  # the colon between ip address and port
+    if s2>0:
+        connection_info[0] = connection_info[0][:s2]
+        connection_info[1] = connection_info[0][s2+1:]
+
 
 class SocketDevice:
     """
@@ -45,14 +56,10 @@ class SocketDevice:
 
         """
         self.close_port()
+        parse_url(connection_info)
         self.remote_host = connection_info[0]
         self.remote_port = connection_info[1]
-        s2 = self.remote_host.find(':')  # the colon between ip address and port
-        if s2>0:
-            self.remote_port = self.remote_host[s2+1:]
-            self.remote_host = self.remote_host[:s2]
-        port_name = str(self.remote_host) + ':' + str(self.remote_port)
-        logger.info("opening TCP socket " + port_name)
+        logger.info("opening TCP socket " + str(self.remote_host) + ':' + str(self.remote_port))
         # dt = socket.getdefaulttimeout()
         # socket.setdefaulttimeout()
         try:
@@ -61,6 +68,9 @@ class SocketDevice:
             self.sock.connect((self.remote_host, int(self.remote_port)))   # the apparently redundant parenthesis are not redundant
             self.exists = True
         except OSError as e:
+            # Typical error is:
+            # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
+            #  or established connection failed because connected host has failed to respond
             # logger.warning("could not create the socket\r\n")
             logger.warning("could not connect the socket\r\n")
             logger.warning(e.__class__)    # TimeoutError
@@ -129,7 +139,7 @@ class SocketDevice:
             logger.warning("SocketDevice.write: can't write to the socket\r\n")
             logger.warning(e.__class__)
             # logger.warning(e.__doc__)
-            # raise e
+            raise e  # TODO test this path
         except Exception as e:   # should never happen?
             logger.error(e.__class__)
             raise e
@@ -172,6 +182,7 @@ class SocketDevice:
         self.sock.setblocking(False)
         r_bytes = ""   # not None, because we want its len to be 0. can't take the len of None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
+        # TODO: use this to bail instead of exceptions?
         if self.is_ready_to_read():
             pass
         attempts = 0
@@ -192,7 +203,7 @@ class SocketDevice:
                 # TODO add some limit so it can't get 'stuck' here
                 if e.errno == 10035:
                     logger.warning(e.__doc__)
-                else:
+                else:  # [WinError 10054] An existing connection was forcibly closed by the remote host
                     logger.warning("error while trying to receive from the socket\r\n")
                     logger.warning(e.__class__)
                     logger.warning(e.__doc__)
@@ -221,7 +232,7 @@ class SocketDevice:
 
 
     def close_port(self):
-        logger.info("close_port: closing socket")
+        # logger.info("close_port: closing socket")
         if not hasattr(self, 'sock'):
             return
         if not hasattr(self.sock, 'close'):
