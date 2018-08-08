@@ -150,7 +150,7 @@ class UltraQ:
         s = None
         # remember the first command sometimes fails, that's OK
         attempts = 0
-        while attempts < 10:  # arbitrary, but must let it try several times
+        while attempts < 5:  # arbitrary, but must let it try several times
             attempts +=1
             try:
                 self.port.write('ID?\r')
