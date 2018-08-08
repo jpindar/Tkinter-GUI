@@ -1,8 +1,7 @@
 """
-File: globe.py
+File: globe.py    a place for stuff that isn't part of the GUI or the instruments
 """
 __author__ = 'jpindar@jpindar.com'
-# pylint: disable=wrong-import-position
 import logging
 logger = logging.getLogger(__name__)
 
@@ -15,8 +14,6 @@ user_pause = False
 # exiting = False
 # file_name = None
 dut = None
-start_freq = 0
-stop_freq = 0
 
 
 # port serial_port_num should default to 0 to make other routines
@@ -61,7 +58,7 @@ def close_dut():
 def open_dut(connection, output, kind):
     """
     connection info is a list of either a com port number or an ip address and port
-    output is something with an .append(string) method
+    output is an object with an .append(string) method
     kind is a enum of DUTKind
     """
     global dut

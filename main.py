@@ -729,12 +729,12 @@ class MainWindow(tk.Frame):
     def refresh_gui(self):
         uf_mode = None
         try:
-            globe.start_freq = globe.dut.get_start_freq()
-            globe.stop_freq = globe.dut.get_stop_freq()
+            start_freq = globe.dut.get_start_freq()
+            stop_freq = globe.dut.get_stop_freq()
             # both of these ways  of setting the label work.
             # is the second one more efficient?
-            self.start_label.configure(text=str(globe.start_freq)+ ' MHz')
-            self.stop_label['text']=str(globe.stop_freq)+ ' MHz'
+            self.start_label.configure(text=str(start_freq)+ ' MHz')
+            self.stop_label['text']=str(stop_freq)+ ' MHz'
             self._freq_s.set("{:.6f}".format(globe.dut.get_freq()))
             self.minor_freq_increment = globe.dut.get_chan_spacing() / const.HZ_PER_MHZ
             # can't just query the gain cuz there was 1 unit w/o a gain query
