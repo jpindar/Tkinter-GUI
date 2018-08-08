@@ -32,6 +32,7 @@ import tkinter.messagebox as tmb
 from tkinter import ttk
 from tkinter import font
 import sys
+import socketdevice
 import serialdevice_pyserial
 import terminalwindow
 import const
@@ -531,7 +532,7 @@ class MainWindow(tk.Frame):
             self.status1("Bad or no response from device")
             return
         except Exception as e:
-            pass
+            logger.info(e.__class__)
         # except bbuq.UltraQLoggedOutError as e:
         #    self.status1("Not Connected to Device")
         #    return
@@ -661,7 +662,7 @@ class MainWindow(tk.Frame):
             globe.dut_kind = globe.DUTKind.network
             self.top_bar2.tkraise()
             # TODO should we set the focus?
-            return   # go wait for user to enter password and click again
+            return   # go wait for user to enter url and click again
         else:
             globe.dut_kind = globe.DUTKind.serial
             if self.top_bar1.comport_str.get() == '':
@@ -689,24 +690,19 @@ class MainWindow(tk.Frame):
 
     def connect_button_handler2(self, event=None):
         globe.remote_address = self.top_bar2.remote_address_str.get()
-        s2 = globe.remote_address.find('http:') # it's not http, but some people type this by accident
-        if s2>=0:
-            globe.remote_address = globe.remote_address[7:] # skip http:\\
-
-        s2 = globe.remote_address.find(':')
-        if s2>0:
-            globe.remote_host = globe.remote_address[:s2]
-            globe.remote_port = globe.remote_address[s2+1:]
-        # else use the default
         self.top_bar3.tkraise()
         self.top_bar3.password_box.focus_set()
+        # go wait for user to enter password and click again
 
 
     def connect_button_handler3(self, event=None):
         try:
             globe.password = self.top_bar3.password_str.get()
-            self.status1("Connecting to device at " + globe.remote_address + ':' + globe.remote_port)
-            globe.open_dut([globe.remote_address, globe.remote_port], app.terminal_window.textbox, kind = globe.DUTKind.network)
+            connection = [globe.remote_address, globe.remote_port]
+            socketdevice.parse_url(connection)  # parse it here because we want it to display nicely
+            # TODO we're calling parse_url repeatedly, which works but is a little wastelful
+            self.status1("Connecting to device at " + connection[0] + ':' + connection[1])
+            globe.open_dut(connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
         except Exception as e:
             logger.error(e.__class__)
             logger.error("Can't open a socket\n")
@@ -720,10 +716,10 @@ class MainWindow(tk.Frame):
             self.top_bar2.tkraise()
 
         if globe.dut is None:
-            self.status1("Cannot connect to device")
+            self.status1("Cannot connect to device at " + connection[0] + ':' + connection[1])
             return
         self.refresh_gui()
-        self.status1("Connected to device at " + globe.remote_address)  # TODO put IP address in title bar?
+        self.status1("Connected to device at " + connection[0] + ':' + connection[1])  # TODO put IP address in title bar?
 
 
     def refresh_gui(self):
@@ -752,6 +748,9 @@ class MainWindow(tk.Frame):
             return
         except bbuq.UltraQLoggedOutError as e:
             self.status1("Not Connected to Device")
+            return
+        except bbuq.UltraQTimeoutError as e:
+            self.status1("No response from device")
             return
         # except Exception as e:
         #     pass
