@@ -1,4 +1,4 @@
-# pylint: disable=wrong-import-position,unused-argument,line-too-long
+# pylint: disable=unused-argument
 """
 File: bbuq.py
 
@@ -61,9 +61,7 @@ class UltraQ:
     """
        represents a BBUQ type Ultra-Q, regardless of connection type
     """
-    default_name = "ASRL4::INSTR"
     class_name = 'UltraQ'
-    friendly_name = 'UltraQ'
     PASSWORD_LENGTH = 16
 
     def __init__(self, connection, output, kind):
@@ -74,6 +72,11 @@ class UltraQ:
         output is anything with an .append(string) method
         kind is an enum representing the type of connection:
         serial, network or mock
+
+        So bbuq is either a serialdevice_pyserial.SerialDevice()
+        or a socketdevice.SocketDevice()
+        or a mock
+
         mock means open a serial port to whatever's there,
         without expecting it to respond correctly
 
@@ -85,13 +88,12 @@ class UltraQ:
         self.connection = connection
         self.exists = False
         self.comPort = None
-        self.friendly_name = "Ultra-Q"
         self.port_num = None
         self.port = None
         self.output = output
         self.nominal_gain = 10.0
         self.revision = 0.0
-        self.attn_step_size = 0.25
+        self.attn_step_size = 0.25 # this will be overridden
         logger.info(self.class_name + " constructor")
         if self.connect():
             if self.kind != globe.DUTKind.mock:
@@ -100,8 +102,6 @@ class UltraQ:
 
     def connect(self):
         success = None
-        # TODO if port already exists, do we need to do anything to it to close it
-        # before creating or opening another?
         if self.kind == globe.DUTKind.serial or self.kind == globe.DUTKind.mock:
             try:
                 self.port = serialdevice_pyserial.SerialDevice()  # just a dumb constructor
@@ -110,7 +110,7 @@ class UltraQ:
                 logger.error(e.__class__)
                 logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
                 return False
-        if self.kind == globe.DUTKind.network:
+        elif self.kind == globe.DUTKind.network:
             try:
                 self.port = socketdevice.SocketDevice()  # just a dumb constructor
                 success = self.port.open_port(self.connection)   # this is what actually does something
@@ -198,9 +198,14 @@ class UltraQ:
         r = None
         logger.info('get_id: sending ' + msg)
         self.output.append(msg + '\n')  # ??
-        # self.port.flushInput()  # nah
-        self.port.write(msg)
-        r = self.port.read()
+        try:
+            # self.port.flushInput()
+            self.port.write(msg)
+            r = self.port.read()
+        except Exception as e:  # more specific exceptions should be already caught
+            logger.error("in get_id")
+            logger.error(e.__class__)
+            return
         r = r.strip(' \r\n')
         logger.info('get_id: got <' + str(r) + '>')
         self.output.append(r)
@@ -560,7 +565,6 @@ class UltraQ:
             pass
 
 
-
     def get_write(self):
         r = self.get_any_boolean("SAVESTATE?\r")
         if r is None:
@@ -611,10 +615,5 @@ class UltraQ:
     def get_detector_a(self):
         return self.get_any_detector("DETA?\r")
 
-
-# class BBUQ(UltraQ):
-#     """my specific kind of Ultra-Q"""
-#    def __init___(self, connection, output, kind):
-#        super().__init__(connection, output, kind)
 
 
