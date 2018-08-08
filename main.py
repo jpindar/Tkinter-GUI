@@ -1,24 +1,20 @@
 #! python3
-# pylint: disable=wrong-import-position, protected-access,unused-argument,line-too-long
+# pylint: disable=protected-access,unused-argument
 """
 a simple Python3.4 GUI using pySerial and tkinter
 Project: BBUQ GUI
 File: main.py
 Date: 10/2017
 Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
-
-
 """
 # TODO add logo on help and about boxes
 # TODO input power indicator?
 # TODO help file (esp related to atten range, step size)
-# pylint: disable=wrong-import-position
-import inspect
-import logging
 
 ENABLE_LOGGING = False
-
 log_filename = 'Ultra-Q.log'
+import inspect
+import logging
 logger = logging.getLogger(__name__)
 if ENABLE_LOGGING:
     logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
@@ -72,7 +68,7 @@ class MainWindow(tk.Frame):
             self.comport_dropdown.grid(row=0, column=1, sticky=tk.W, padx=3, ipady=1)
             self.populate_comport_menu()
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
-                                           command=gparent.connect_button_handler)
+                                  command=gparent.connect_button_handler)
             self.button_connect.grid(row=0, column=2, padx=2, pady=2, sticky=tk.E)
             self.button_connect.bind('<Return>', gparent.connect_button_handler)
 
@@ -329,6 +325,10 @@ class MainWindow(tk.Frame):
         self.freq_label1.config(state=new_state)
         self.start_label.config(state=new_state)
         self.stop_label.config(state=new_state)
+        self.rightButton.config(state=new_state)
+        self.rightButton2.config(state=new_state)
+        self.leftButton.config(state=new_state)
+        self.leftButton2.config(state=new_state)
         self.bypass_chk.config(state=new_state)
         self.gain_label.config(state=new_state)
         self.gain_box.config(state=new_state)
@@ -652,8 +652,6 @@ class MainWindow(tk.Frame):
         self._freq_s.set("{:.6f}".format(f))
 
 
-
-
     def connect_button_handler(self, event=None):
         self.status1(" ")
         self.enable_widgets(False)
@@ -687,13 +685,13 @@ class MainWindow(tk.Frame):
             self.status1("Cannot connect to device on that port")
             return
         self.refresh_gui()
-        # self.eeprom_dump()
+
 
     def connect_button_handler2(self, event=None):
         globe.remote_address = self.top_bar2.remote_address_str.get()
         s2 = globe.remote_address.find('http:') # it's not http, but some people type this by accident
         if s2>=0:
-            globe.remote_address = globe.remote_address[7:]
+            globe.remote_address = globe.remote_address[7:] # skip http:\\
 
         s2 = globe.remote_address.find(':')
         if s2>0:
