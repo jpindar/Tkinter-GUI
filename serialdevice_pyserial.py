@@ -3,6 +3,8 @@
 File: serialdevice_pyserial.py
 
 Unlike some libraries, pySerial works with comports up to at least COM99. Nice.
+
+ TODO pop up or other obvious error handling when exception occurs?
 """
 __author__ = 'jpindar@jpindar.com'
 
@@ -59,16 +61,16 @@ class SerialDevice:
         logger.info("SerialDevice constructor done")
 
 
-    def open_port(self, connection):
+    def open_port(self, connection_info):
         """
         opens a serial port
         connection_info[0] should be an integer, 0 meaning COM1, etc
         returns True if it succeeded, False if there was an error
-        :param connection: a list, 0th element is an integer
+        :param connection_info: a list, 0th element is an integer
         :return: boolean
         """
         self.close_port()
-        self.port_num = connection[0]
+        self.port_num = connection_info[0]
         port_name = "COM" + str(self.port_num)
         logger.info("opening serial port " + port_name)
         try:
@@ -86,19 +88,16 @@ class SerialDevice:
             logger.warning("SerialDevice.openPort: Serial port setting out of range\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            # raise e
             return False
         except serial.SerialException as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            # raise e
             return False
         except Exception as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
-            # raise e
             return False
         else:
             # assert isinstance(self.comPort, pyvisa.resources.serial.SerialInstrument)
@@ -121,6 +120,18 @@ class SerialDevice:
             return False
         return True
 
+
+    def close_port(self):
+        if not hasattr(self, 'comPort'):
+            return
+        if not hasattr(self.comPort, 'close'):
+            return
+        try:
+            self.comPort.close()
+        except Exception as e:
+            logger.warning(e.__class__)
+
+
     def write(self, msg):
         """
         send a string
@@ -129,7 +140,6 @@ class SerialDevice:
         :param msg: the string to send
         :return: none
         """
-        # TODO pop up or other obvious error handling when exception occurs?
         # self.comPort.reset_input_buffer()
         # self.comPort.reset_output_buffer()
         response = None
@@ -150,24 +160,21 @@ class SerialDevice:
             logger.warning(e.__class__)
             # logger.warning(e.__doc__)
             # raise e
-        except Exception as e:   # should never happen?
+        except Exception as e:  # should never happen?
             logger.error(e.__class__)
             raise e
-        return
 
 
     def read(self):
         """
         reads a response from the serial port
-        don't need to check if port is open, self._readline will throw an exception if its not
-        don't use self.comPort.readline() because comport.readline() is extremely slow
+        don't use self.comPort.readline() because it is slow
         : rtype: string
         """
-        # TODO investigate why comPort.readline() is so slow
         r_bytes = None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
+
         try:
-            # r_bytes = self.comPort.readline()
             r_bytes = self._readline()
         except serial.SerialException as e:
             if e == serial.portNotOpenError:
@@ -188,46 +195,32 @@ class SerialDevice:
             logger.warning(e.__cause__)
             return None
         else:
-            r_str = str(r_bytes.decode(encoding='UTF-8'))    # cast bytes to string
-            # logger.info("SerialDevice.read: got <" + str(r) + ">")
-        r_str = r_str.strip('\r\n')
+            r_str = str(r_bytes.decode(encoding='UTF-8'))  # cast bytes to string
+            r_str = r_str.strip('\r\n')
         return r_str
 
 
-    def close_port(self):
-        if not hasattr(self, 'comPort'):
-            return
-        if not hasattr(self.comPort, 'close'):
-            return
-        try:
-            self.comPort.close()
-        except Exception as e:
-            logger.warning(e.__class__)
-            raise e
 
 
     def _readline(self, terminator='\r'):
         """
-        implemented this myself because comport.readline() is extremely slow
+        implemented this myself because PySerial's readline() is extremely slow
         :param terminator: read until you receive this termination character(s)
         :return: bytes (because that's what the original .readline() returns)
         """
-        MAX_COUNT = 1000  # completely arbitrary number
-        eol = b'\r'      # '\r' or b'\r' ?
+        MAX_COUNT = 1000  # a completely arbitrary number
         c = None
-        if terminator is not None:
-            eol = terminator  # TODO pylint doesn't like this (redefined-variable-type) but it works
-        length_eol = len(eol)
+        length_of_termination = len(terminator)
         line = bytearray()
         count = 0
         try:
             while self.comPort.inWaiting() > 0:
-                # c = self.comPort.read(self.comPort.inWaiting())   # not sure if this is better
+                # c = self.comPort.read(self.comPort.inWaiting())   # would this be faster?
                 c = self.comPort.read(1)
                 if c:
                     line += c
                     count += 1
-                    if line[-length_eol:] == eol:
+                    if line[-length_of_termination:] == terminator:
                         break
                     if count > MAX_COUNT:
                         break
