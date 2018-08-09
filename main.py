@@ -1,5 +1,5 @@
 #! python3
-# pylint: disable=protected-access,unused-argument
+# pylint: disable=protected-access,unused-argument,bad-continuation
 """
 a simple Python3.4 GUI using pySerial and tkinter
 Project: BBUQ GUI
@@ -473,12 +473,14 @@ class MainWindow(tk.Frame):
             return
         self.overpower_bypass_b.set(r)
 
+
     def logging_handler(self, event=None): # TODO test this
         b = self.logging_b.get()
         if b:
             logging.disable(logging.NOTSET)
         else:
             logging.disable(999)
+
 
     def write_handler(self, event=None):
         """
@@ -744,12 +746,15 @@ class MainWindow(tk.Frame):
             uf_setting = globe.dut.get_ultrafine()
             self._uf_s.set(str(uf_setting))
         except bbuq.UltraQResponseError as e:
+            logger.error(e.__class__)
             self.status1("Bad or no response from device")
             return
         except bbuq.UltraQLoggedOutError as e:
+            logger.error(e.__class__)
             self.status1("Not Connected to Device")
             return
         except bbuq.UltraQTimeoutError as e:
+            logger.error(e.__class__)
             self.status1("No response from device")
             return
         # except Exception as e:
@@ -810,7 +815,7 @@ def exit_handler(event=None):
     logger.info('calling root.destroy and os.exit()')
     root.destroy()
 
-    # TODO: not sure if os._exit is the best practice here, but it works OK
+    # not sure if os._exit is the best practice here, but it works OK
     # sys.exit()  #this doesn't work - the test loop keeps going until it crashes due to the textbox being gone.
     # raise SystemExit doesn't always work
     # noinspection PyProtectedMember
