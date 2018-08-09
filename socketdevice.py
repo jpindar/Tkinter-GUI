@@ -1,7 +1,7 @@
-# pylint: disable=wrong-import-position,unused-argument,line-too-long
+# pylint: disable=unused-argument
 """
 File: socketdevice.py
-
+ TODO pop up or other obvious error handling when exception occurs?
 """
 import logging
 logger = logging.getLogger(__name__)
@@ -15,14 +15,13 @@ read_delay = 0.2
 
 def parse_url(connection_info):
     # The url shouldn't be http, but some people copy & paste this by accident
-    # s2 = connection_info[0].find('http:\\')
-    # if s2>=0:
-    #     connection_info[0] = connection_info[0][7:] # skip http:\\
-    #
-    s2 = connection_info[0].find(':')  # the colon between ip address and port
-    if s2>0:
-        connection_info[0] = connection_info[0][:s2]
-        connection_info[1] = connection_info[0][s2+1:]
+    s = connection_info[0].find('http:\\')
+    if s>=0:
+        connection_info[0] = connection_info[0][7:] # skip http:\\
+    s = connection_info[0].find(':')  # the colon between ip address and port
+    if s>0:
+        connection_info[0] = connection_info[0][:s]
+        connection_info[1] = connection_info[0][s+1:]
 
 
 class SocketDevice:
@@ -65,7 +64,8 @@ class SocketDevice:
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # t = self.sock.gettimeout()
-            self.sock.connect((self.remote_host, int(self.remote_port)))   # the apparently redundant parenthesis are not redundant
+            # these apparently redundant parenthesis are not redundant
+            self.sock.connect((self.remote_host, int(self.remote_port)))
             self.exists = True
         except OSError as e:
             # Typical error is:
@@ -78,7 +78,7 @@ class SocketDevice:
             logger.warning(e.strerror)     # "a connection attempt failed because.....
             logger.warning(e.errno)
             logger.warning(e.winerror)
-            raise e
+            return False
         except [ValueError] as e:
             # I'd like to catch TypeError, but not allowed to catch classes that don't inherit from BaseException
             logger.warning("SocketDevice.openPort: invalid setting\r\n")
@@ -203,7 +203,8 @@ class SocketDevice:
                 # TODO add some limit so it can't get 'stuck' here
                 if e.errno == 10035:
                     logger.warning(e.__doc__)
-                else:  # [WinError 10054] An existing connection was forcibly closed by the remote host
+                else:
+                    # typically [WinError 10054] An existing connection was forcibly closed by the remote host
                     logger.warning("error while trying to receive from the socket\r\n")
                     logger.warning(e.__class__)
                     logger.warning(e.__doc__)
