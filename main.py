@@ -725,7 +725,7 @@ class MainWindow(tk.Frame):
 
 
     def refresh_gui(self):
-        uf_mode = None
+        uf_mode = None  # This is the only variable here because its the only one used after the try
         try:
             start_freq = globe.dut.get_start_freq()
             stop_freq = globe.dut.get_stop_freq()
@@ -757,8 +757,6 @@ class MainWindow(tk.Frame):
             logger.error(e.__class__)
             self.status1("No response from device")
             return
-        # except Exception as e:
-        #     pass
         self.enable_widgets(True, uf_mode)
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
@@ -814,7 +812,6 @@ def exit_handler(event=None):
         globe.close_dut()
     logger.info('calling root.destroy and os.exit()')
     root.destroy()
-
     # not sure if os._exit is the best practice here, but it works OK
     # sys.exit()  #this doesn't work - the test loop keeps going until it crashes due to the textbox being gone.
     # raise SystemExit doesn't always work
@@ -870,7 +867,7 @@ root.bind_all('<Escape>', user_interrupt_handler)
 root.bind('<KeyPress-F1>', display_help_messagebox)
 root.protocol('WM_DELETE_WINDOW', exit_handler)  # override the Windows "X" button
 # app.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
-
+app.enable_widgets(False)
 root.mainloop()
 
 
