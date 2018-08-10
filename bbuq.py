@@ -111,8 +111,8 @@ class UltraQ:
         success = None
         if self.kind == globe.DUTKind.serial or self.kind == globe.DUTKind.mock:
             try:
-                self.port = serialdevice_pyserial.SerialDevice()  # just a dumb constructor
-                success = self.port.open_port(self.connection)   # this is what actually does something
+                self.port = serialdevice_pyserial.SerialDevice()
+                success = self.port.open_port(self.connection)
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
@@ -123,12 +123,13 @@ class UltraQ:
                 success = self.port.open_port(self.connection)   # this is what actually does something
                 sleep(0.5) # because calling write immediately after opening the socket doesn't always work
             except OSError as e:
-                logger.warning(e.__class__)    # TimeoutError
-                logger.warning(e.__doc__)      # "Timeout expired"
-                logger.warning(e.strerror)     # "a connection attempt failed because.....
-                logger.warning(e.errno)
-                logger.warning(e.winerror)
-                success = False
+                # Typical error is:
+                # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
+                #  or established connection failed because connected host has failed to respond
+                # TODO display this in a popup?
+                self.output.append(e.__doc__)      # "Timeout expired"
+                self.output.append(e.strerror)     # "a connection attempt failed because.....
+                return False
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("can't create socketdevice or open network socket")
@@ -154,7 +155,7 @@ class UltraQ:
             attempts +=1
             try:
                 self.port.write('ID?\r')
-                s = self.port.read()  # response should be "Ultra-Q"
+                s = self.port.read()  # response should be "Ultra-Q" if we are logged in
             except OSError as e:
                 if e == TimeoutError:
                     self.output.append("\nTimeout Error")
@@ -168,7 +169,6 @@ class UltraQ:
             if correct_id(s):  # we are logged in
                 break
             if self.kind == globe.DUTKind.network:
-                # TODO this should also be in a try block
                 if s == 'password:':
                     try:
                         self.port.write(globe.password + '\r')
@@ -192,7 +192,7 @@ class UltraQ:
             logger.info(self.class_name + " constructor is done.\n")
         else:
             self.exists = False
-            logger.info(self.class_name + " constructor failed, raising IOError.\n")
+            logger.info(self.class_name + " constructor failed, raising exception.\n")
             # TODO create a better exception class for this
             raise UltraQError
 
@@ -774,7 +774,7 @@ class UltraQ:
 
 
     def get_overpower_bypass_enable(self):
-        # TODO make this deal gracefully (return False) with units that have no overpower bypass
+        r = None
         try:
             if float(self.revision) < 2.02:
                 r = self.get_any_boolean("OVERPOWERBYPASS?\r")
@@ -829,8 +829,6 @@ class UltraQ:
     def set_attn(self, data: str):
         # TODO should this take the absolute value?
         # or limit to positive numbers?
-        # if data<0:
-        #    data = 0
         return self.set_any_attn("ATTN " + str(data)[:6] + '\r')
 
     def get_max_attn(self):
