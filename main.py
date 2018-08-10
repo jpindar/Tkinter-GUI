@@ -140,8 +140,6 @@ class MainWindow(tk.Frame):
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
         self.fast_baud_b = tk.BooleanVar()
-        self.serial_port_b = tk.BooleanVar()
-        self.network_port_b = tk.BooleanVar()
 
         logger.info("creating main window")
         self.terminal_window = terminalwindow.TerminalWindow(self.parent, globe.dev_null)
@@ -349,24 +347,6 @@ class MainWindow(tk.Frame):
             self.uf_leftButton.config(state=new_state)
             self.uf_rightButton.config(state=new_state)
 
-
-    def port_selection_handler1(self):
-        if self.serial_port_b.get():
-            self.network_port_b.set(False)
-            globe.dut_kind = globe.DUTKind.serial
-            self.top_bar1.tkraise()
-        else:
-            self.network_port_b.set(True)
-            globe.dut_kind = globe.DUTKind.network
-
-    def port_selection_handler2(self):
-        if self.network_port_b.get():
-            self.serial_port_b.set(False)
-            globe.dut_kind = globe.DUTKind.network
-            self.top_bar2.tkraise()
-        else:
-            self.serial_port_b.set(True)
-            globe.dut_kind = globe.DUTKind.serial
 
     # These functions have an optional 'event' parameter because button binding passes an
     # event object to the callback function, but the menu doesn't.
@@ -661,12 +641,10 @@ class MainWindow(tk.Frame):
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
         if self.top_bar1.comport_str.get() == 'network':
-            globe.dut_kind = globe.DUTKind.network
             self.top_bar2.tkraise()
             # TODO should we set the focus?
             return   # go wait for user to enter url and click again
         else:
-            globe.dut_kind = globe.DUTKind.serial
             if self.top_bar1.comport_str.get() == '':
                 if not self.top_bar1.populate_comport_menu():
                     self.status1("Cannot find any com ports. Connect device and try again.")
@@ -721,7 +699,8 @@ class MainWindow(tk.Frame):
             self.status1("Cannot connect to device at " + connection[0] + ':' + connection[1])
             return
         self.refresh_gui()
-        self.status1("Connected to device at " + connection[0] + ':' + connection[1])  # TODO put IP address in title bar?
+        self.status1("Connected to device at "+connection[0]+':'+connection[1])
+        # TODO put IP address in title bar?
 
 
     def refresh_gui(self):
@@ -760,8 +739,6 @@ class MainWindow(tk.Frame):
         self.enable_widgets(True, uf_mode)
         self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
-
-
 
 
     def poll_for_overpower_bypass(self):
