@@ -1,5 +1,6 @@
 """
-File: globe.py    a place for stuff that isn't part of the GUI or the instruments
+File: globe.py
+      a place for stuff that isn't part of the GUI or the instruments
 """
 __author__ = 'jpindar@jpindar.com'
 import logging
@@ -30,7 +31,6 @@ class DUTKind(Enum):
     serial = 1
     network = 2
 
-dut_kind = DUTKind.serial
 remote_port = '2101'  # default value, can be overridden
 remote_address = ''
 password = ''
@@ -38,6 +38,7 @@ password_length = 16 # arbitrary, but same as firmware
 
 
 class DevNull:
+    # pylint: disable=too-few-public-methods
     def __init__(self):
         pass
 
