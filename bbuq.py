@@ -101,7 +101,6 @@ class UltraQ:
         self.nominal_gain = 10.0
         self.revision = 0.0
         self.attn_step_size = 0.25 # this will be overridden
-        logger.info(self.class_name + " constructor")
         if self.connect():
             if self.kind != globe.DUTKind.mock:
                 self.login()
@@ -157,6 +156,7 @@ class UltraQ:
                 self.port.write('ID?\r')
                 s = self.port.read()  # response should be "Ultra-Q" if we are logged in
             except OSError as e:
+                logger.error(e.__class__)
                 if e == TimeoutError:
                     self.output.append("\nTimeout Error")
                 else:
@@ -166,19 +166,20 @@ class UltraQ:
                 logger.error("can't get id")
                 raise e
 
-            if correct_id(s):  # we are logged in
-                break
+            if correct_id(s):  # we are logged in or don't need to log in
+                break   # break out of the while loop
             if self.kind == globe.DUTKind.network:
-                if s == 'password:':
+                if s == 'password:':  # if dut is asking for a password
                     try:
                         self.port.write(globe.password + '\r')
                         s = self.port.read()  # should respond with "OK"
                     except OSError as e:
+                        logger.error(e.__class__)
                         if e == TimeoutError:
                             self.output.append("\nTimeout Error")
                         else:
                             self.output.append("\nCommunication Error\n")
-                    except Exception as e:    # more specific exceptions should be already caught
+                    except Exception as e:
                         logger.error(e.__class__)
                         logger.error("can't log in")
                         raise e
@@ -187,7 +188,7 @@ class UltraQ:
                         break
 
         if correct_id(s):
-            self.exists = True
+            self.exists = True # now we are logged in ( or rather, we can run commands)
             self.initialize_me()
             logger.info(self.class_name + " constructor is done.\n")
         else:
