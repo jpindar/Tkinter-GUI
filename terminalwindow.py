@@ -22,6 +22,7 @@ class TextBox(tkst.ScrolledText):
     """
     inherits from ScrolledText so we can add a context menu and some methods
     """
+    # pylint: disable=too-many-ancestors
     def __init__(self, parent, **kwargs):
         self.parent = parent
         super().__init__(parent, **kwargs)
@@ -163,7 +164,9 @@ class TerminalWindow(tk.Toplevel):
             try:
                 self.textbox.append(globe.dut.port.read())
             except Exception as e:
-                pass
+                logger.error(e.__class__)
+            if msg is None:
+                return
             if msg not in self.send_list:
                 self.send_list.insert(0, msg)
                 self.send_box['values'] = self.send_list
