@@ -68,7 +68,7 @@ class UltraQ:
     """
        represents a BBUQ type Ultra-Q, regardless of connection type
     """
-    class_name = 'UltraQ'
+    # pylint: disable=too-many-public-methods
     PASSWORD_LENGTH = 16
 
     def __init__(self, connection, output, kind):
@@ -133,10 +133,10 @@ class UltraQ:
                 return False
         # at this point, success means we've opened a com port. Doesn't mean there's anything there.
         if not success:
-            logger.info(self.class_name + " port constructor failed.\n")
+            logger.info(" port constructor failed.\n")
             return False
         if self.kind == globe.DUTKind.mock:
-            logger.info(self.class_name + " mock constructor is done.\n")
+            logger.info(" mock constructor is done.\n")
             self.exists = True
             return True
         self.login()
@@ -146,7 +146,7 @@ class UltraQ:
     def login(self):
         globe.password = globe.password[:UltraQ.PASSWORD_LENGTH]
         s = None
-        # remember the first command sometimes fails, that's OK
+        logger.info("attempting to log in\r")
         attempts = 0
         while attempts < 5:  # arbitrary, but must let it try several times
             attempts +=1
@@ -156,42 +156,57 @@ class UltraQ:
             except OSError as e:
                 logger.error(e.__class__)
                 if e == TimeoutError:
-                    self.output.append("\nTimeout Error")
+                    logger.warning("Timeout Error")
+                    # self.output.append("\nTimeout Error")
                 else:
-                    self.output.append("\nCommunication Error\n")
+                    logger.warning("Unknown Error")
+                    # self.output.append("\nCommunication Error\n")
             except Exception as e:    # more specific exceptions should be already caught
                 logger.error(e.__class__)
-                logger.error("can't get id")
+                logger.error("Unknown Error")
                 raise e
 
             if correct_id(s):  # we are logged in or don't need to log in
                 break   # break out of the while loop
             if self.kind == globe.DUTKind.network:
                 if s == 'password:':  # if dut is asking for a password
+                    logger.info("sending password")
                     try:
                         self.port.write(globe.password + '\r')
                         s = self.port.read()  # should respond with "OK"
                     except OSError as e:
                         logger.error(e.__class__)
                         if e == TimeoutError:
-                            self.output.append("\nTimeout Error")
+                            # self.output.append("\nTimeout Error")
+                            logger.error("Timeout Error")
                         else:
-                            self.output.append("\nCommunication Error\n")
+                            # self.output.append("\nCommunication Error\n")
+                            logger.error("Unknown Error")
                     except Exception as e:
                         logger.error(e.__class__)
-                        logger.error("can't log in")
+                        logger.error("Unknown Error")
                         raise e
-                    if s[:1]!= "OK":   # if it does = OK, go around the while loop again, getting the ID
-                        self.output.append(s)
+                    if s is None:
+                        logger.info("response is None")
+                        s = ""
                         break
+                    if s[:2]!= "OK":   # if characters 0 thru 1 of s does = OK, go around the while loop again, getting the ID
+                        # self.output.append(s)
+                        logger.info("response is not 'OK'")
+                        s = ""
+                        break
+                    else:
+                        logger.info("response is 'OK'")
+                        s = ""
 
         if correct_id(s):
+            logger.info("ID is correct, reading some data from device")
             self.exists = True # now we are logged in ( or rather, we can run commands)
             self.initialize_me()
-            logger.info(self.class_name + " constructor is done.\n")
+            logger.info("Connected\n")
         else:
             self.exists = False
-            logger.info(self.class_name + " constructor failed, raising exception.\n")
+            logger.info(" Failed to Connect\n")
             # TODO create a better exception class for this
             raise UltraQError
         return
