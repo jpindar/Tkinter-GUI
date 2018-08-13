@@ -85,18 +85,22 @@ def open_dut(connection, output, kind):
         dut.connect()
     except (OSError, bbuq.UltraQError) as e:
         logger.error(e.__class__)
-        logger.error("Can't create the dut\n")
-        return
+        logger.error("Can't connect to the dut\n")
+        dut.exists = False
+        return False
     except Exception as e:
         logger.error(e.__class__)
-        logger.error("Can't create the dut\n")
-        return
+        logger.error("Can't connect to the dut\n")
+        dut.exists = False
+        return False
+    # at this point dut is a bbuq in any case
     dut.set_output(output)
     if dut.exists:
         output.append("\nConnected to DUT.\r\n")
+        return True
     else:
         output.append("\nNot connected to DUT.\n")
         dut = None
-    return
+        return False
 
 
