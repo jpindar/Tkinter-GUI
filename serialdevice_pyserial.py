@@ -54,11 +54,8 @@ class SerialDevice:
         """
         logger.info(" ")
         logger.info("SerialDevice constructor")
-        self.exists = False
         self.comPort = None
-        self.friendly_name = "serial port"
         self.port_num = None
-        logger.info("SerialDevice constructor done")
 
 
     def open_port(self, connection_info):
@@ -81,9 +78,7 @@ class SerialDevice:
                                          bytesize=serial.EIGHTBITS,
                                          timeout = 2,
                                          write_timeout = 2)
-            # if this fails, object will have no comPort attribute.
-            # this can be checked, but is it better to have comPort is None?
-            self.exists = True
+
         except ValueError as e:
             logger.warning("SerialDevice.openPort: Serial port setting out of range\r\n")
             logger.warning(e.__class__)
@@ -101,9 +96,7 @@ class SerialDevice:
             return False
         else:
             # assert isinstance(self.comPort, pyvisa.resources.serial.SerialInstrument)
-            # not necessary if constructor worked, but assertions are good.
             logger.info("SerialDevice.openPort: opened a " + str(self.comPort.__class__))
-            self.exists = True
             return True
 
 
@@ -198,8 +191,6 @@ class SerialDevice:
             r_str = str(r_bytes.decode(encoding='UTF-8'))  # cast bytes to string
             r_str = r_str.strip('\r\n')
         return r_str
-
-
 
 
     def _readline(self, terminator='\r'):
