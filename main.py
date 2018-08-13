@@ -25,7 +25,6 @@ else:
     logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
 
 logger.info("testing logger")
-import time
 import os
 import tkinter as tk
 import tkinter.messagebox as tmb
@@ -50,6 +49,7 @@ poll_timing = 1000
 
 
 class MainWindow(tk.Frame):
+    # pylint: disable=too-many-instance-attributes
     """
     Note that all of the TopBarN frames overlay each other, and the one we
     want to be active at any time is brought to the top
@@ -644,7 +644,7 @@ class MainWindow(tk.Frame):
             globe.close_dut()  # this sets globe.dut to None
         if self.top_bar1.comport_str.get() == 'network':
             self.top_bar2.tkraise()
-            # TODO should we set the focus?
+            self.top_bar2.remote_address_box.focus_set()
             return   # go wait for user to enter url and click again
         else:
             if self.top_bar1.comport_str.get() == '':
@@ -689,7 +689,7 @@ class MainWindow(tk.Frame):
             globe.password = self.top_bar3.password_str.get()
             connection = [globe.remote_address, globe.remote_port]
             socketdevice.parse_url(connection)  # parse it here because we want it to display nicely
-            # TODO we're calling parse_url repeatedly, which works but is a little wastelful
+            # TODO we're calling parse_url repeatedly, which works but seems wasteful
             self.status1("Connecting to device at " + connection[0] + ':' + connection[1])
             success = globe.open_dut(connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
         except Exception as e:
@@ -809,7 +809,7 @@ def show_terminal():
 
 def user_interrupt_handler(event=None):
     globe.user_interrupt = True
-     # 'break' tells Tkinter to ignore the event that triggers this callback
+    # 'break' tells Tkinter to ignore the event that triggers this callback
     return 'break'
 
 
