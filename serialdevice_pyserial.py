@@ -10,7 +10,6 @@ __author__ = 'jpindar@jpindar.com'
 
 import logging
 logger = logging.getLogger(__name__)
-
 import time
 import serial
 import serial.tools.list_ports
@@ -89,7 +88,7 @@ class SerialDevice:
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
             return False
-        except Exception as e:
+        except Exception as e:    # we can't know what serial.Serial will throw
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
