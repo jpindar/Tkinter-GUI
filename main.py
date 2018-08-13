@@ -636,6 +636,7 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler(self, event=None):
+        success = None
         self.status1(" ")
         self.enable_widgets(False)
         if globe.dut is not None:
@@ -654,7 +655,7 @@ class MainWindow(tk.Frame):
             try:
                 s = self.top_bar1.comport_str.get()
                 self.status1("connecting...")
-                globe.open_dut([s], self.terminal_window.textbox,globe.DUTKind.serial)
+                success = globe.open_dut([s], self.terminal_window.textbox,globe.DUTKind.serial)
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("Can't open a serial port\n")
@@ -665,10 +666,15 @@ class MainWindow(tk.Frame):
         if globe.dut is None:
             self.status1("Cannot connect to device on that port")
             return
+        if not success:
+            self.status1("Cannot connect to device on that port")
+            return
         self.refresh_gui()
+        self.status_bar1.config(text = "Connected")  # self.status_bar1.config(text = "Connected to " + s)
 
 
     def connect_button_handler2(self, event=None):
+        self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler3
         globe.remote_address = self.top_bar2.remote_address_str.get()
         self.top_bar3.tkraise()
         self.top_bar3.password_box.focus_set()
@@ -676,13 +682,15 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler3(self, event=None):
+        self.enable_widgets(False) # not usre if this is needed here or in connect_button_handler2
+        success = None
         try:
             globe.password = self.top_bar3.password_str.get()
             connection = [globe.remote_address, globe.remote_port]
             socketdevice.parse_url(connection)  # parse it here because we want it to display nicely
             # TODO we're calling parse_url repeatedly, which works but is a little wastelful
             self.status1("Connecting to device at " + connection[0] + ':' + connection[1])
-            globe.open_dut(connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
+            success = globe.open_dut(connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
         except Exception as e:
             logger.error(e.__class__)
             logger.error("Can't open a socket\n")
@@ -697,6 +705,9 @@ class MainWindow(tk.Frame):
 
         if globe.dut is None:
             self.status1("Cannot connect to device at " + connection[0] + ':' + connection[1])
+            return
+        if not success:
+            self.status1("Cannot connect to device at that address")
             return
         self.refresh_gui()
         self.status1("Connected to device at "+connection[0]+':'+connection[1])
@@ -737,7 +748,6 @@ class MainWindow(tk.Frame):
             self.status1("No response from device")
             return
         self.enable_widgets(True, uf_mode)
-        self.status_bar1.config(text = "OK")
         self.poll_for_overpower_bypass()
 
 
@@ -763,6 +773,7 @@ def show_terminal():
 
 def user_interrupt_handler(event=None):
     globe.user_interrupt = True
+     # 'break' tells Tkinter to ignore the event that triggers this callback
     return 'break'
 
 
