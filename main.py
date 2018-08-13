@@ -177,7 +177,7 @@ class MainWindow(tk.Frame):
         self.menu_bar.add_cascade(label='File', menu=file_menu)
         file_menu.add_command(label='Exit', command=exit_handler)
 
-
+        # TODO initial state of these?
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
         self.option_menu.add_checkbutton(label="Over power protection", onvalue=1, offvalue=0,
@@ -187,7 +187,8 @@ class MainWindow(tk.Frame):
         self.option_menu.add_checkbutton(label="115200 baud", onvalue=1, offvalue=0,
                         variable=self.fast_baud_b, command=self.fast_baud_handler)
         if ENABLE_LOGGING:
-            self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
+            self.logging_b = True
+            self.option_menu.add_checkbutton(label="write log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
 
         self.option_menu.entryconfig(0, state=tk.DISABLED)
         self.option_menu.entryconfig(1, state=tk.DISABLED)
@@ -454,12 +455,12 @@ class MainWindow(tk.Frame):
         self.overpower_bypass_b.set(r)
 
 
-    def logging_handler(self, event=None): # TODO test this
+    def logging_handler(self, event=None):
         b = self.logging_b.get()
         if b:
-            logging.disable(logging.NOTSET)
+            logging.disable(logging.NOTSET) # enables logging
         else:
-            logging.disable(999)
+            logging.disable(999)  # disables logging
 
 
     def write_handler(self, event=None):
