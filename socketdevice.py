@@ -84,7 +84,7 @@ class SocketDevice:
             # logger.warn(e.__doc__)
             # raise e
             return False
-        except Exception as e:
+        except Exception as e:  # we don't know what exceptions sock.connect can raise
             logger.warning("SocketDevice.openPort: Can't open that socket\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
@@ -114,7 +114,6 @@ class SocketDevice:
         """send a string
         :param msg: the string to send
         :return: none
-        # TODO: do we need to check the port's status first?
         # TODO: pop up or other obvious error handling when exception occurs?
         """
         response = None
@@ -125,6 +124,8 @@ class SocketDevice:
         # msg = msg + "\n"
         # logger.info("SocketDevice.write: writing " + str(msg) + " to socket")
         msg_bytes = msg.encode(encoding='UTF-8')
+        # if self.is_ready_to_write():
+        #     pass
         try:
             bytes_sent = self.sock.send(msg_bytes)
             # success = self.sock.sendall(msg_bytes)
@@ -146,6 +147,7 @@ class SocketDevice:
 
 
     def is_ready_to_read(self):
+        # pylint: disable=unused-variable
         potential_readers = [self.sock]
         potential_writers = [self.sock]
         potential_errs = [self.sock]
@@ -154,6 +156,7 @@ class SocketDevice:
         return bool(self.sock in ready_to_read)
 
     def is_ready_to_write(self):
+        # pylint: disable=unused-variable
         potential_readers = [self.sock]
         potential_writers = [self.sock]
         potential_errs = [self.sock]
@@ -162,6 +165,7 @@ class SocketDevice:
         return bool(self.sock in ready_to_write)
 
     def is_in_error(self):
+        # pylint: disable=unused-variable
         potential_readers = [self.sock]
         potential_writers = [self.sock]
         potential_errs = [self.sock]
@@ -179,7 +183,6 @@ class SocketDevice:
         self.sock.setblocking(False)
         r_bytes = ""   # not None, because we want its len to be 0. can't take the len of None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
-        # TODO: use this to bail instead of exceptions?
         if self.is_ready_to_read():
             pass
         attempts = 0
@@ -237,28 +240,24 @@ class SocketDevice:
             return
         try:
             self.sock.close()
-        except Exception as e:
+        except Exception as e:  # we don't know what exceptions sock.close can raise
             logger.warning(e.__class__)
 
     # def _readline(self, terminator='\r'):
     #     """
     #     implemented this myself because comport.readline() is extremely slow
-    #     TODO figure out why?
     #     """
     #     eol = b'\r'      # '\r' or b'\r' ?
     #     c = None
-    #     if terminator is not None:
-    #         eol = terminator  # TODO pylint doesn't like this (redefined-variable-type) but it works
-    #     length_eol = len(eol)
+    #     length_terminator = len(terminator)
     #     line = bytearray()
-    #     # TODO: needs length limit?
     #     try:
     #         while self.comPort.inWaiting() > 0:
     #             # c = self.comPort.read(self.comPort.inWaiting())   # not sure if this is better
     #             c = self.comPort.read(1)
     #             if c:
     #                 line += c
-    #                 if line[-length_eol:] == eol:
+    #                 if line[-length_terminator:] == eol:
     #                     break
     #             else:
     #                 break
