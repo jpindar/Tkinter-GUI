@@ -101,9 +101,6 @@ class UltraQ:
         self.nominal_gain = 10.0
         self.revision = 0.0
         self.attn_step_size = 0.25 # this will be overridden
-        if self.connect():
-            if self.kind != globe.DUTKind.mock:
-                self.login()
 
 
     def connect(self):
@@ -134,7 +131,7 @@ class UltraQ:
                 logger.error("can't create socketdevice or open network socket")
                 # output.append("Can't open the network connection " + connection[0] + ':' + str(connection[1]) + "\n")
                 return False
-
+        # at this point, success means we've opened a com port. Doesn't mean there's anything there.
         if not success:
             logger.info(self.class_name + " port constructor failed.\n")
             return False
@@ -142,6 +139,7 @@ class UltraQ:
             logger.info(self.class_name + " mock constructor is done.\n")
             self.exists = True
             return True
+        self.login()
         return True
 
 
@@ -196,7 +194,7 @@ class UltraQ:
             logger.info(self.class_name + " constructor failed, raising exception.\n")
             # TODO create a better exception class for this
             raise UltraQError
-
+        return
 
     def initialize_me(self):
         self.revision = self.get_revision()
