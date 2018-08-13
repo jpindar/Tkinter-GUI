@@ -15,6 +15,9 @@ read_delay = 0.2
 
 def parse_url(connection_info):
     # The url shouldn't be http, but some people copy & paste this by accident
+    s = connection_info[0].find('https:\\')
+    if s>=0:
+        connection_info[0] = connection_info[0][8:] # skip https:\\
     s = connection_info[0].find('http:\\')
     if s>=0:
         connection_info[0] = connection_info[0][7:] # skip http:\\
@@ -29,19 +32,17 @@ class SocketDevice:
     A TCP port, created by socket
     """
     def __init__(self):
-        """constructor for serial device, no parameters
-        :rtype : SerialDevice
+        """
+        constructor for serial device, no parameters
         create an instance variable but don't open the port
         """
         logger.info(" ")
         logger.info("SocketDevice constructor")
-        self.exists = False
         self.comPort = None
         self.port_num = None
         self.sock = None
         self.remote_host = None
         self.remote_port = None
-        logger.info("SocketDevice constructor done")
 
 
     def open_port(self, connection_info):
@@ -52,7 +53,6 @@ class SocketDevice:
          these are separated by a colon
 
           TODO  set timeout, default is too long?, ideally make this configurable
-
         """
         self.close_port()
         parse_url(connection_info)
@@ -66,19 +66,17 @@ class SocketDevice:
             # t = self.sock.gettimeout()
             # these apparently redundant parenthesis are not redundant
             self.sock.connect((self.remote_host, int(self.remote_port)))
-            self.exists = True
+
         except OSError as e:
             # Typical error is:
             # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
             #  or established connection failed because connected host has failed to respond
             # logger.warning("could not create the socket\r\n")
-            logger.warning("could not connect the socket\r\n")
+            logger.warning("connection attempt failed\r\n")
             logger.warning(e.__class__)    # TimeoutError
-            logger.warning(e.__doc__)      # "Timeout expired"
+            logger.warning("error " + str(e.errno) + " " +e.__doc__)      # "Timeout expired"
             logger.warning(e.strerror)     # "a connection attempt failed because.....
-            logger.warning(e.errno)
-            logger.warning(e.winerror)
-            return False
+            raise e
         except [ValueError] as e:
             # I'd like to catch TypeError, but not allowed to catch classes that don't inherit from BaseException
             logger.warning("SocketDevice.openPort: invalid setting\r\n")
@@ -96,7 +94,6 @@ class SocketDevice:
             # assert isinstance(self.comPort, pyvisa.resources.serial.SerialInstrument)
             # not necessary if constructor worked, but assertions are good.
             logger.info("SocketDevice.openPort: opened a " + str(self.sock.__class__))
-            self.exists = True
             return True
 
 
