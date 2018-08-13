@@ -748,7 +748,7 @@ class MainWindow(tk.Frame):
             self.status1("No response from device")
             return
         self.enable_widgets(True, uf_mode)
-        self.poll_for_overpower_bypass()
+        # self.poll_for_overpower_bypass()
 
 
     def poll_for_overpower_bypass(self):
@@ -773,32 +773,32 @@ class MainWindow(tk.Frame):
         # self.after(poll_timing, self.poll_for_overpower_bypass)
 
 
-    def listen_for_overpower_bypass(self):
-        #  if True:  # TODO implement a way to toggle this # self.overpower_bypass_b
-        if globe.dut is not None:
-            if globe.dut.port.is_open():
-                try:
-                    op = globe.dut.port.read()
-                # except bbuq.UltraQResponseError as e:
-                #     self.status1("Bad or no response from device")
-                #     return
-                except bbuq.UltraQLoggedOutError as e:
-                    logger.error(e.__class__)
-                    self.status1("Not Connected to Device")
-                    return
-                if op is not None:
-                    if "OVERPOWER" in op:
-                        self.status_bar3.config(text = "OVERPOWER")
-                        self.update()
-                        time.sleep(0.2)
-                        self.status_bar3.config(text = " ")
-                        self.update()
-                else:
-                    self.status_bar3.config(text = "")
-        # else:
-        #    pass
-        # self.status_bar3.config(text = "")
-        self.after(poll_timing, self.listen_for_overpower_bypass)
+    # def listen_for_overpower_bypass(self):
+    #     #  if True:  # TODO implement a way to toggle this # self.overpower_bypass_b
+    #     if globe.dut is not None:
+    #         if globe.dut.port.is_open():
+    #             try:
+    #                 op = globe.dut.port.read()
+    #             # except bbuq.UltraQResponseError as e:
+    #             #     self.status1("Bad or no response from device")
+    #             #     return
+    #             except bbuq.UltraQLoggedOutError as e:
+    #                 logger.error(e.__class__)
+    #                 self.status1("Not Connected to Device")
+    #                 return
+    #             if op is not None:
+    #                 if "OVERPOWER" in op:
+    #                     self.status_bar3.config(text = "OVERPOWER")
+    #                     self.update()
+    #                     time.sleep(0.2)
+    #                     self.status_bar3.config(text = " ")
+    #                     self.update()
+    #             else:
+    #                 self.status_bar3.config(text = "")
+    #     # else:
+    #     #    pass
+    #     # self.status_bar3.config(text = "")
+    #     self.after(poll_timing, self.listen_for_overpower_bypass)
 
 
 def show_terminal():
