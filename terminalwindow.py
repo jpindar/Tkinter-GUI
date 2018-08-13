@@ -41,7 +41,7 @@ class TextBox(tkst.ScrolledText):
             self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0,
                                              variable=self.logging_b, command=self.logging_handler)
 
-    def logging_handler(self): # TODO test this
+    def logging_handler(self):
         b = self.logging_b.get()
         if b:
             logging.disable(logging.NOTSET)
