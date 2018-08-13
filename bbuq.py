@@ -181,7 +181,7 @@ class UltraQ:
                         logger.error(e.__class__)
                         logger.error("can't log in")
                         raise e
-                    if s[:3] == 'bad':
+                    if s[:1]!= "OK":   # if it does = OK, go around the while loop again, getting the ID
                         self.output.append(s)
                         break
 
