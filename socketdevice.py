@@ -22,9 +22,9 @@ def parse_url(connection_info):
     if s>=0:
         connection_info[0] = connection_info[0][7:] # skip http:\\
     s = connection_info[0].find(':')  # the colon between ip address and port
-    if s>0:
-        connection_info[0] = connection_info[0][:s]
+    if s>0:    # the order of these lines matters
         connection_info[1] = connection_info[0][s+1:]
+        connection_info[0] = connection_info[0][:s]
 
 
 class SocketDevice:
@@ -148,29 +148,19 @@ class SocketDevice:
 
     def is_ready_to_read(self):
         # pylint: disable=unused-variable
-        potential_readers = [self.sock]
-        potential_writers = [self.sock]
-        potential_errs = [self.sock]
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
         return bool(self.sock in ready_to_read)
 
     def is_ready_to_write(self):
-        # pylint: disable=unused-variable
-        potential_readers = [self.sock]
-        potential_writers = [self.sock]
-        potential_errs = [self.sock]
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
         return bool(self.sock in ready_to_write)
 
     def is_in_error(self):
         # pylint: disable=unused-variable
-        potential_readers = [self.sock]
-        potential_writers = [self.sock]
-        potential_errs = [self.sock]
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select(potential_readers,potential_writers,potential_errs,timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
         return bool(self.sock in in_error)
 
     def read(self):
