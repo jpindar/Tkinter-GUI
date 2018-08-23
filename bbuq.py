@@ -210,7 +210,33 @@ class UltraQ:
         self.output = output
 
     def get_all(self):
-        pass    # TODO create get_all()
+        old_output = self.output  # save output destination
+        self.output = globe.dev_null  # suppress output
+        s = "firmware revision: " + self.get_revision()
+        old_output.append(s)
+
+        # s = "max step: " + self.get_max_step() + "\r"
+        # s += "step: " + str(self.get_step())
+        # s += "nominal gain: " + str(self.get_nominal_gain())
+
+        s = "start frequency: " + str(self.get_start_freq()) + " MHz\n"
+        s += "stop frequency: " + str(self.get_stop_freq()) + " MHz\n"
+        s += "current frequency: " + str(self.get_freq()) + " MHz\n"
+        s += "channel spacing: " + str(self.get_chan_spacing()) + " KHz\n"
+        s += "UltraFine tuning calibration mode: " + str(self.get_uf_mode()) + "\n"
+        s += "UltraFine tuning setting: " + str(self.get_ultrafine()) + "\n"
+        s += "synthesizer lock status: " + self.get_lock() + "\n"
+        old_output.append(s)
+
+        s = "gain setting: " + str(self.get_gain()) + " dB\n"
+        s += "manual bypass status: " + str(self.get_bypass()) + "\n"
+        s += "overpower bypass enable: " + str(self.get_overpower_bypass_enable()) + "\n"
+        s += "overpower bypass status: " + str(self.get_overpower_status()) + "\n"
+        s += "eeprom write mode: " + str(self.get_eeprom_write_mode()) + "\n"
+        old_output.append(s)
+        self.output = old_output  # restore output destination
+        return
+
 
 
     def get_id(self):

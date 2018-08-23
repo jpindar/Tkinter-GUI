@@ -113,6 +113,7 @@ class TextBox(tkst.ScrolledText):
 
 
 class TerminalWindow(tk.Toplevel):
+    # pylint: disable=too-many-instance-attributes
     class_name = 'TerminalWindow'
 
     def __init__(self, parent, output, **kw):
@@ -133,21 +134,35 @@ class TerminalWindow(tk.Toplevel):
         tk.Grid.rowconfigure(self, 0, weight =1)
         tk.Grid.columnconfigure(self, 0, weight=1)
 
-        send_button_width = 10
-        # sendbox_width = self.parent.winfo_width() - send_button_width
-        sendbox_width = 30
+        send_button_width = 8
+        status_button_width = 8
+        sendbox_width = 25
 
         self.textbox = TextBox(self, wrap='none', state="normal", undo=1, width=30)
-        self.textbox.grid(row=0, column=0, columnspan = 2, sticky='n' + 's' + 'e' + 'w')
+        self.textbox.grid(row=0, column=0, columnspan = 3, sticky='n' + 's' + 'e' + 'w')
 
         self.send_box = ttk.Combobox(self, textvariable=self._sendstring, values=self.send_list, width=sendbox_width)
         self.send_box.grid(row=1, column=0, padx='5', sticky=tk.W + tk.E + tk.NS)
         self.send_box.bind('<Return>', self.send_button_handler)
 
-        self.button_send = ttk.Button(self, text="send", width=send_button_width,
-                                      command=self.send_button_handler)
-        self.button_send.grid(row=1, column=1, sticky='w', padx=20)
+        self.button_send = ttk.Button(self, text="send", width=send_button_width, command=self.send_button_handler)
+        self.button_send.grid(row=1, column=1, sticky='w', padx=0)
         self.button_send.bind('<Return>', self.send_button_handler)
+
+        self.button_status = ttk.Button(self, text="status", width=status_button_width, command=self.status_button_handler)
+        self.button_status.grid(row=1, column=2, sticky='e', padx=0)
+        self.button_status.bind('<Return>', self.status_button_handler)
+
+
+    def status_button_handler(self, event=None):
+        if globe.dut is None:
+            return
+        if globe.dut.port.is_open():
+            globe.dut.get_all()
+        self.textbox.append('\r\n')
+        self.send_box.focus_set()
+        return 'break'
+
 
 
     def send_button_handler(self, event=None):
