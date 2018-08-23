@@ -49,13 +49,13 @@ poll_timing = 1000
 
 
 class MainWindow(tk.Frame):
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-many-ancestors
     """
     Note that all of the TopBarN frames overlay each other, and the one we
     want to be active at any time is brought to the top
     """
     major_freq_increment = 1
-    minor_freq_increment = 0.0025
+    minor_freq_increment = 0.0025  # TODO read this from channel spacing
 
 
     class TopBar1(tk.Frame):
@@ -501,9 +501,11 @@ class MainWindow(tk.Frame):
             logger.warning(e.__class__)
             logger.warning("value error in fast_baud_handler")
             return
+        # seems odd to define baud rates here...
+        # TODO move these to dut
         if s:
             b = 1
-            serialdevice_pyserial.baud_rate = 115200  # seems weird to define these here...
+            serialdevice_pyserial.baud_rate = 115200
         else:
             b = 0
             serialdevice_pyserial.baud_rate = 19200
@@ -684,7 +686,7 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler3(self, event=None):
-        self.enable_widgets(False) # not usre if this is needed here or in connect_button_handler2
+        self.enable_widgets(False) # not sure if this is needed here or in connect_button_handler2
         success = None
         try:
             globe.password = self.top_bar3.password_str.get()
