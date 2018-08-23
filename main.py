@@ -42,7 +42,7 @@ __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
 # v1.06 for dBSpectra
 const.VERSION = "v1.06"
-const.BUILD = "1.06.1"
+const.BUILD = "1.06.4"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
@@ -480,8 +480,8 @@ class MainWindow(tk.Frame):
             b = 0
         logger.info("setting the EEPROM write to " + str(b))
         try:
-            globe.dut.set_write(b)
-            r = globe.dut.get_write()
+            globe.dut.set_eeprom_write_mode(b)
+            r = globe.dut.get_eeprom_write_mode()
         except bbuq.UltraQResponseError as e:
             self.status1("Bad or no response from device")
             return
@@ -677,6 +677,7 @@ class MainWindow(tk.Frame):
     def connect_button_handler2(self, event=None):
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler3
         globe.remote_address = self.top_bar2.remote_address_str.get()
+        success = None
         self.top_bar3.tkraise()
         self.top_bar3.password_box.focus_set()
         # go wait for user to enter password and click again
@@ -730,7 +731,7 @@ class MainWindow(tk.Frame):
             self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
             self.bypass_i.set(globe.dut.get_bypass())
             self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
-            self.write_b.set(globe.dut.get_write())
+            self.write_b.set(globe.dut.get_eeprom_write_mode())
             # let the UF wait til other widgets are being enabled, looks bad to do it first
             uf_mode = globe.dut.get_uf_mode()
             self._ufmode_i.set(uf_mode)
