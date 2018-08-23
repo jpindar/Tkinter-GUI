@@ -35,6 +35,7 @@ remote_port = '2101'  # default value, can be overridden
 remote_address = ''
 password = ''
 password_length = 16 # arbitrary, but same as firmware
+connection = None
 
 
 class DevNull:
@@ -75,31 +76,29 @@ def open_dut(connection, output, kind):
     """
     global dut
     global serial_port_num
-
+    success = False
     assert isinstance(connection, list)
     if kind == DUTKind.serial or kind == DUTKind.mock:
         serial_port_num = parse_comport_name(connection)
-
+    dut = bbuq.UltraQ(connection, output, kind) # dumb constructor
     try:
-        dut = bbuq.UltraQ(connection, output, kind) # dumb constructor
-        dut.connect()
+        if dut.connect():
+            success = dut.login()
     except (OSError, bbuq.UltraQError) as e:
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
-        dut.exists = False
         return False
     except Exception as e:
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
-        dut.exists = False
         return False
-    # at this point dut is a bbuq in any case
+    # assert(isinstance(dut,bbuq.UltraQ))
     dut.set_output(output)
-    if dut.exists:
-        output.append("\nConnected to DUT.\r\n")
+    if success:
+        output.append("\nConnected\r\n")
         return True
     else:
-        output.append("\nNot connected to DUT.\n")
+        output.append("\nNot connected\n")
         dut = None
         return False
 
