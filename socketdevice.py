@@ -3,6 +3,7 @@
 File: socketdevice.py
  TODO pop up or other obvious error handling when exception occurs?
 """
+import ipaddress
 import logging
 logger = logging.getLogger(__name__)
 import time
@@ -13,18 +14,47 @@ __author__ = 'jpindar@jpindar.com'
 read_delay = 0.2
 
 
-def parse_url(connection_info):
+def parse_url(c):
     # The url shouldn't be http, but some people copy & paste this by accident
-    s = connection_info[0].find('https:\\')
-    if s>=0:
-        connection_info[0] = connection_info[0][8:] # skip https:\\
-    s = connection_info[0].find('http:\\')
-    if s>=0:
-        connection_info[0] = connection_info[0][7:] # skip http:\\
-    s = connection_info[0].find(':')  # the colon between ip address and port
-    if s>0:    # the order of these lines matters
-        connection_info[1] = connection_info[0][s+1:]
-        connection_info[0] = connection_info[0][:s]
+    assert isinstance(c, list)
+    assert isinstance(c[0], str)
+    s = c[0]
+    assert isinstance(s, str)
+    pos = s.find('https:\\')
+    if pos>=0:
+        s = s[8:] # skip https:\\
+    pos = s.find('http:\\')
+    if pos>=0:
+        s = s[7:] # skip http:\\
+    pos = s.find(':')  # the colon between ip address and port
+    if pos>=0:    # the order of these lines matters
+        c[1] = s[pos+1:]
+        c[0] = s[:pos]
+    else:
+        c[0] = s
+        # c[1] is already the default port
+    return
+
+
+"""
+    socket.getaddrinfo(host, port, family=0, type=0, proto=0, flags=0)
+    Translate the host/port argument into a sequence of 5-tuples that contain
+    all the necessary arguments for creating a socket connected to that service.
+    host is a domain name, a string representation of an IPv4/v6 address or None.
+    port is a string service name such as 'http', a numeric port number or None.
+"""
+
+
+def validate_url(connection):
+    #ipaddress.ip_address() fixes leading zeros
+    #and throws reasonable exceptions for malformed addresses
+    z = ipaddress.ip_address(connection[0])
+    connection[0] = z.exploded  # are these the same?
+    connection[0] = str(z)
+    whole_list = socket.getaddrinfo(connection[0], int(connection[1]))
+    ipv4_list = whole_list[0]
+    sock_addr = ipv4_list[4]
+    return sock_addr
 
 
 class SocketDevice:
@@ -41,11 +71,9 @@ class SocketDevice:
         self.comPort = None
         self.port_num = None
         self.sock = None
-        self.remote_host = None
-        self.remote_port = None
 
 
-    def open_port(self, connection_info):
+    def open_port(self, connection):
         """
          opens the port with fixed parameters in connection_info
          remote_host is an IP address in string form
@@ -55,27 +83,45 @@ class SocketDevice:
           TODO  set timeout, default is too long?, ideally make this configurable
         """
         self.close_port()
-        parse_url(connection_info)
-        self.remote_host = connection_info[0]
-        self.remote_port = connection_info[1]
-        logger.info("opening TCP socket " + str(self.remote_host) + ':' + str(self.remote_port))
+        parse_url(connection)
+        try:
+            connection = validate_url(connection)
+        except (OSError,ipaddress.AddressValueError,ipaddress.NetmaskValueError) as e:
+            # Typical error is:
+            # 11004 socket.gaierror   can be caused by malformed URL  "getaddrinfo failed"
+            # or?
+            #
+            logger.warning("bad address\r\n")
+            logger.warning(e.__class__)    # socket.gaierror
+            logger.warning("error " + str(e.errno) + " " +e.__doc__)
+            logger.warning(e.strerror)
+            raise e
+        except (ValueError, TypeError) as e:
+            #
+            #
+            logger.warning("bad URL or IP address\r\n")
+            logger.warning(e.__class__)    # socket.gaierror
+            logger.warning(e.args[0])
+            logger.warning(e.__doc__)
+
+        logger.info("opening TCP socket " + str(connection[0]) + ':' + str(connection[1]))
         # dt = socket.getdefaulttimeout()
         # socket.setdefaulttimeout()
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # t = self.sock.gettimeout()
             # these apparently redundant parenthesis are not redundant
-            self.sock.connect((self.remote_host, int(self.remote_port)))
-
+            self.sock.connect((connection[0], int(connection[1])))
         except OSError as e:
             # Typical error is:
-            # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
+            # [WinError 10060] TimeoutError A connection attempt failed because the connected party did not properly respond after a period of time,
             #  or established connection failed because connected host has failed to respond
-            # logger.warning("could not create the socket\r\n")
+            #  This happens with a valid but non=existant url
+            #
             logger.warning("connection attempt failed\r\n")
             logger.warning(e.__class__)    # TimeoutError
-            logger.warning("error " + str(e.errno) + " " +e.__doc__)      # "Timeout expired"
-            logger.warning(e.strerror)     # "a connection attempt failed because.....
+            logger.warning("error " + str(e.errno) + " " +e.__doc__)
+            logger.warning(e.strerror)
             raise e
         except [ValueError] as e:
             # I'd like to catch TypeError, but not allowed to catch classes that don't inherit from BaseException
@@ -84,7 +130,7 @@ class SocketDevice:
             # logger.warn(e.__doc__)
             # raise e
             return False
-        except Exception as e:  # we don't know what exceptions sock.connect can raise
+        except Exception as e:  # don't know what other exceptions sock.connect can raise
             logger.warning("SocketDevice.openPort: Can't open that socket\r\n")
             logger.warning(e.__class__)
             # logger.warn(e.__doc__)
@@ -130,13 +176,10 @@ class SocketDevice:
             bytes_sent = self.sock.send(msg_bytes)
             # success = self.sock.sendall(msg_bytes)
         except OSError as e:
-            if e == TimeoutError:
-                logger.warning("SocketDevice.write: Timeout Error")
-            else:
-                logger.warning("SocketDevice.write: error raised by socket write")
-            logger.warning("SocketDevice.write: can't write to the socket\r\n")
+            # TimeoutError, ConnectionAbortedError
+            logger.warning("SocketDevice.write: error raised by socket write")
             logger.warning(e.__class__)
-            # logger.warning(e.__doc__)
+            logger.warning(e.__doc__)
             raise e  # TODO test this path
         except Exception as e:   # should never happen?
             logger.error(e.__class__)
@@ -153,6 +196,7 @@ class SocketDevice:
         return bool(self.sock in ready_to_read)
 
     def is_ready_to_write(self):
+        # pylint: disable=unused-variable
         timeout = 10
         ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
         return bool(self.sock in ready_to_write)
@@ -187,7 +231,7 @@ class SocketDevice:
                 logger.warning(e.strerror)
                 logger.warning(e.__cause__)
                 return None
-            except OSError as e:
+            except (IOError,OSError) as e:
                 # if using nonblocking I/O, error 10035 happens when there's
                 # no data to read yet. This would be OK, but:
                 # TODO add some limit so it can't get 'stuck' here
@@ -200,13 +244,14 @@ class SocketDevice:
                     logger.warning(e.__doc__)
                     logger.warning(e.strerror)
                     logger.warning(e.__cause__)
-                    # raise e   # could throw something here, depending on the cause?
+                    # raise e
                     return None
-            except (IOError, AttributeError) as e:
+            except AttributeError as e:
+                #
                 logger.warning("error while trying to receive from the socket\r\n")
                 logger.warning(e.__class__)
                 logger.warning(e.__doc__)
-                logger.warning(e.strerror)
+                # logger.warning(e.strerror) AttributeError doesn't have a strerror
                 logger.warning(e.__cause__)
                 return None
             if attempts > MAX_ATTEMPTS:
