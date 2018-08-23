@@ -68,7 +68,7 @@ class UltraQ:
     """
        represents a BBUQ type Ultra-Q, regardless of connection type
     """
-    # pylint: disable=too-many-public-methods
+    # pylint: disable=too-many-public-methods, too-many-instance-attributes
     PASSWORD_LENGTH = 16
 
     def __init__(self, connection, output, kind):
@@ -93,7 +93,6 @@ class UltraQ:
         assert isinstance(connection, list)
         self.kind = kind
         self.connection = connection
-        self.exists = False
         self.comPort = None
         self.port_num = None
         self.port = None
@@ -106,40 +105,38 @@ class UltraQ:
     def connect(self):
         success = None
         if self.kind == globe.DUTKind.serial or self.kind == globe.DUTKind.mock:
+            self.port = serialdevice_pyserial.SerialDevice()
             try:
-                self.port = serialdevice_pyserial.SerialDevice()
                 success = self.port.open_port(self.connection)
             except Exception as e:
                 logger.error(e.__class__)
-                logger.error("can't create serialdevice or open COM" + str(globe.serial_port_num))
+                logger.error("can't open COM port" + str(globe.serial_port_num))
                 return False
         elif self.kind == globe.DUTKind.network:
+            self.port = socketdevice.SocketDevice()  # just a dumb constructor
             try:
-                self.port = socketdevice.SocketDevice()  # just a dumb constructor
-                success = self.port.open_port(self.connection)   # this is what actually does something
-                sleep(0.5) # because calling write immediately after opening the socket doesn't always work
+                success = self.port.open_port(self.connection) # this is what actually does something
             except OSError as e:
                 # Typical error is:
                 # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
                 #  or established connection failed because connected host has failed to respond
-                # TODO display this in a popup?
+                # This error was already logged, only re-raised to move this UI stuff to this higher level
                 self.output.append(e.__doc__)      # "Timeout expired"
                 self.output.append(e.strerror)     # "a connection attempt failed because.....
                 return False
             except Exception as e:
-                logger.error(e.__class__)
+                logger.error(e.__class__)  # Value Error? TypeError? happens due to a malforned URL, or if it is None
                 logger.error("can't create socketdevice or open network socket")
                 # output.append("Can't open the network connection " + connection[0] + ':' + str(connection[1]) + "\n")
                 return False
         # at this point, success means we've opened a com port. Doesn't mean there's anything there.
         if not success:
-            logger.info(" port constructor failed.\n")
+            logger.info("connect failed.\n")
             return False
         if self.kind == globe.DUTKind.mock:
-            logger.info(" mock constructor is done.\n")
-            self.exists = True
+            # logger.info("mock constructor is done.\n")
             return True
-        self.login()
+        sleep(0.5) # because trying to write to the socket immediately after opening it doesn't always work
         return True
 
 
@@ -155,16 +152,10 @@ class UltraQ:
                 s = self.port.read()  # response should be "Ultra-Q" if we are logged in
             except OSError as e:
                 logger.error(e.__class__)
-                if e == TimeoutError:
-                    logger.warning("Timeout Error")
-                    # self.output.append("\nTimeout Error")
-                else:
-                    logger.warning("Unknown Error")
-                    # self.output.append("\nCommunication Error\n")
-            except Exception as e:    # more specific exceptions should be already caught
+                break
+            except Exception as e:
                 logger.error(e.__class__)
-                logger.error("Unknown Error")
-                raise e
+                break
 
             if correct_id(s):  # we are logged in or don't need to log in
                 break   # break out of the while loop
@@ -176,16 +167,10 @@ class UltraQ:
                         s = self.port.read()  # should respond with "OK"
                     except OSError as e:
                         logger.error(e.__class__)
-                        if e == TimeoutError:
-                            # self.output.append("\nTimeout Error")
-                            logger.error("Timeout Error")
-                        else:
-                            # self.output.append("\nCommunication Error\n")
-                            logger.error("Unknown Error")
+                        break
                     except Exception as e:
                         logger.error(e.__class__)
-                        logger.error("Unknown Error")
-                        raise e
+                        break
                     if s is None:
                         logger.info("response is None")
                         s = ""
@@ -201,15 +186,14 @@ class UltraQ:
 
         if correct_id(s):
             logger.info("ID is correct, reading some data from device")
-            self.exists = True # now we are logged in ( or rather, we can run commands)
             self.initialize_me()
             logger.info("Connected\n")
+            return True
         else:
-            self.exists = False
             logger.info(" Failed to Connect\n")
             # TODO create a better exception class for this
-            raise UltraQError
-        return
+            return False
+
 
     def initialize_me(self):
         self.revision = self.get_revision()
@@ -243,7 +227,7 @@ class UltraQ:
                 self.output.append("\nTimeout Error")
             else:
                 self.output.append("\nCommunication Error\n")
-        except Exception as e:  # more specific exceptions should be already caught
+        except Exception as e:
             logger.error("in get_id")
             logger.error(e.__class__)
             return
@@ -802,7 +786,6 @@ class UltraQ:
         return r
 
     def set_overpower_bypass_enable(self, b):
-        # TODO make this deal gracefully with units that have no overpower bypass
         try:
             if float(self.revision) < 2.02:
                 self.set_any_boolean("OVERPOWERBYPASS", b)
@@ -812,13 +795,13 @@ class UltraQ:
             logger.error(e.__class__)
 
 
-    def get_write(self):
+    def get_eeprom_write_mode(self):
         r = self.get_any_boolean("SAVESTATE?\r")
         if r is None:
             return True  # not sure what desired behavior is TODO
         return r
 
-    def set_write(self, b):
+    def set_eeprom_write_mode(self, b):
         return self.set_any_boolean("SAVESTATE", b)
 
     def set_baud(self, b):
