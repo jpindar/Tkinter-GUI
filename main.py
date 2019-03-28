@@ -139,6 +139,7 @@ class MainWindow(tk.Frame):
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
         self.fast_baud_b = tk.BooleanVar()
+        self.save_password_b = tk.BooleanVar()
 
         logger.info("creating main window")
         self.terminal_window = terminalwindow.TerminalWindow(self.parent, globe.dev_null)
@@ -186,6 +187,8 @@ class MainWindow(tk.Frame):
                         variable=self.write_b, command=self.write_handler)
         self.option_menu.add_checkbutton(label="115200 baud", onvalue=1, offvalue=0,
                         variable=self.fast_baud_b, command=self.fast_baud_handler)
+        self.option_menu.add_checkbutton(label="save password", onvalue=1, offvalue=0,
+                        variable=self.save_password_b, command=self.save_password_handler)
         if ENABLE_LOGGING:
             self.logging_b = True
             self.option_menu.add_checkbutton(label="write log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
@@ -489,6 +492,16 @@ class MainWindow(tk.Frame):
             return
         self.write_b.set(r)
 
+    def save_password_handler(self, event=None):
+        try:
+            s = self.save_password_b.get()
+        except ValueError as e:
+            logger.warning(e.__class__)
+            logger.warning("value error in save_password_handler")
+            return
+        logger.info("setting the save_password to " + str(s))
+        self.save_password_b.set(s)
+
 
     def fast_baud_handler(self, event=None):
         """
@@ -712,11 +725,13 @@ class MainWindow(tk.Frame):
             logger.error("Can't log in\n")
             app.terminal_window.textbox.append("Couldn't log in\n")
             self.status1("Cannot connect to a device")
-            self.top_bar3.password_str.set("")
+            if not self.save_password_b.get():
+                self.top_bar3.password_str.set("")
             self.top_bar1.tkraise()
             return
         finally:
-            self.top_bar3.password_str.set("")
+            if not self.save_password_b.get():
+                self.top_bar3.password_str.set("")
             self.top_bar2.tkraise()  # this may not actually happen til we get back to the mainloop
 
         if globe.dut is None:
