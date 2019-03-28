@@ -145,6 +145,8 @@ class UltraQ:
             # logger.info("mock constructor is done.\n")
             return True
         sleep(0.5) # because trying to write to the socket immediately after opening it doesn't always work
+        if self.kind == globe.DUTKind.serial:
+            self.initialize_me()
         return True
 
 
@@ -153,7 +155,7 @@ class UltraQ:
         s = None
         logger.info("attempting to log in\r")
         attempts = 0
-        while attempts < 5:  # arbitrary, but must let it try several times
+        while attempts < 4:
             attempts +=1
             try:
                 self.port.write('ID?\r')
@@ -167,30 +169,11 @@ class UltraQ:
 
             if is_correct_id(s):  # we are logged in or don't need to log in
                 break   # break out of the while loop
-            if self.kind == globe.DUTKind.network:
-                if is_password_prompt(s):
-                    logger.info("sending password")
-                    try:
-                        self.port.write(globe.password + '\r')
-                        s = self.port.read()  # should respond with "OK"
-                    except OSError as e:
-                        logger.error(e.__class__)
-                        break
-                    except Exception as e:
-                        logger.error(e.__class__)
-                        break
-                    if s is None:
-                        logger.info("response is None")
-                        s = ""
-                        break
-                    if s[:2]!= "OK":   # if characters 0 thru 1 of s does = OK, go around the while loop again, getting the ID
-                        # self.output.append(s)
-                        logger.info("response is not 'OK'")
-                        s = ""
-                        break
-                    else:
-                        logger.info("response is 'OK'")
-                        s = ""
+
+            if is_password_prompt(s):
+                success, s = self.send_password()
+                if not success:
+                    break
 
         if is_correct_id(s):
             logger.info("ID is correct, reading some data from device")
@@ -199,8 +182,34 @@ class UltraQ:
             return True
         else:
             logger.info(" Failed to Connect\n")
-            # TODO create a better exception class for this
             return False
+
+
+    def send_password(self):
+        logger.info("sending password")
+        r = None
+        try:
+            self.port.write(globe.password + '\r')
+            r = self.port.read()  # should respond with "OK"
+        except OSError as e:
+            logger.error(e.__class__)
+            return False, r
+        except Exception as e:
+            logger.error(e.__class__)
+            return False, r
+        if r is None:
+            logger.info("response is None")
+            r = ""
+            return False, r
+        if r[:2]!= "OK":   # if characters 0 thru 1 of s does = OK, go around the while loop again, getting the ID
+            # self.output.append(s)
+            logger.info("response is not 'OK'")
+            r = ""
+            return False, r
+        else:
+            logger.info("response is 'OK'")
+            r = ""
+            return True, r
 
 
     def initialize_me(self):
@@ -262,7 +271,6 @@ class UltraQ:
             else:
                 self.output.append("\nCommunication Error\n")
         except Exception as e:
-            logger.error("in get_id")
             logger.error(e.__class__)
             return
         r = r.strip(' \r\n')

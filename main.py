@@ -4,7 +4,7 @@
 a simple Python3.4 GUI using pySerial and tkinter
 Project: BBUQ GUI
 File: main.py
-Date: 10/2017
+Date: 8/2018
 Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 """
 # TODO add logo on help and about boxes
@@ -40,9 +40,8 @@ import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
-# v1.06 for dBSpectra
-const.VERSION = "v1.06"
-const.BUILD = "1.06.4"
+const.VERSION = "v1.07"
+const.BUILD = "1.07.0"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
@@ -178,6 +177,7 @@ class MainWindow(tk.Frame):
         file_menu.add_command(label='Exit', command=exit_handler)
 
         # TODO initial state of these?
+        # overpower and write enable can be read from dut in GUI refresh
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
         self.option_menu.add_checkbutton(label="Over power protection", onvalue=1, offvalue=0,
@@ -253,7 +253,6 @@ class MainWindow(tk.Frame):
         self.uf_frame.grid(row=0, column=0, rowspan=1,  padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief= tk.GROOVE, borderwidth=4)
-        # self.gain_frame.grid(row=5, column=0, rowspan=1,columnspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
         self.gain_frame.grid(row=1, column=0, rowspan=1,padx= 5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self.bypass_frame = tk.Frame(self.mid_frame, height=1, width=3,  relief= tk.GROOVE, borderwidth=4)
@@ -374,7 +373,7 @@ class MainWindow(tk.Frame):
                 a = 0
             logger.info("setting the attn to " + str(a))
             globe.dut.set_attn(a)
-            # can't just query the gain cuz there was 1 unit w/o a gain query
+            # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
         except bbuq.UltraQResponseError as e:
             self.status1("Bad or no response from device")
@@ -398,7 +397,7 @@ class MainWindow(tk.Frame):
                 a = 0
             logger.info("setting the attn to " + str(a))
             globe.dut.set_attn(a)
-            # can't just query the gain cuz there was 1 unit w/o a gain query
+            # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
         except bbuq.UltraQResponseError as e:
             self.status1("Bad or no response from device")
@@ -603,8 +602,7 @@ class MainWindow(tk.Frame):
         logger.info("setting the freq to " + str(f))
         try:
             globe.dut.set_freq(f)
-            f2 = globe.dut.get_freq() # if this fails, it raises the exception
-            # but then device & gui might be out of sync
+            f2 = globe.dut.get_freq()
         except bbuq.UltraQResponseError as e:
             self.status1("Bad or no response from device")
             return
@@ -612,7 +610,6 @@ class MainWindow(tk.Frame):
             self.status1("Not Connected to Device")
             return
         else:
-            # self.status1("")
             self._freq_s.set("{:.6f}".format(f2))
 
 
@@ -674,48 +671,65 @@ class MainWindow(tk.Frame):
             return
         self.refresh_gui()
         self.status_bar1.config(text = "Connected")  # self.status_bar1.config(text = "Connected to " + s)
+        #self.poll_for_overpower_bypass()
+        #self.listen_for_overpower_bypass()
 
 
     def connect_button_handler2(self, event=None):
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler3
         globe.remote_address = self.top_bar2.remote_address_str.get()
         success = None
-        self.top_bar3.tkraise()
-        self.top_bar3.password_box.focus_set()
-        # go wait for user to enter password and click again
+        globe.connection = [globe.remote_address, globe.remote_port]
+        socketdevice.parse_url(globe.connection)  # parse it here because we want it to display nicely
+        self.status1("Connecting to device at " + globe.connection[0] + ':' + globe.connection[1])
+
+        try:
+            success = globe.open_dut(globe.connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
+        except Exception as e:
+            logger.error(e.__class__)
+            logger.error("Can't open a socket\n")
+            app.terminal_window.textbox.append("Couldn't open the socket\n")
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
+            success = False
+
+        if not success:
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
+            return   # give up
+        else:
+            self.top_bar3.tkraise()
+            self.top_bar3.password_box.focus_set()
+            return   # go wait for user to enter password and click again
 
 
     def connect_button_handler3(self, event=None):
         self.enable_widgets(False) # not sure if this is needed here or in connect_button_handler2
         success = None
+        globe.password = self.top_bar3.password_str.get()
         try:
-            globe.password = self.top_bar3.password_str.get()
-            connection = [globe.remote_address, globe.remote_port]
-            socketdevice.parse_url(connection)  # parse it here because we want it to display nicely
-            # TODO we're calling parse_url repeatedly, which works but seems wasteful
-            self.status1("Connecting to device at " + connection[0] + ':' + connection[1])
-            success = globe.open_dut(connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
-        except Exception as e:
+            success = globe.dut.login()  # even for a unit that doesn't need it, this tests the ID
+        except Exception as e:  # UltraQError
             logger.error(e.__class__)
-            logger.error("Can't open a socket\n")
-            app.terminal_window.textbox.append("Couldn't open the socket\n")
+            logger.error("Can't log in\n")
+            app.terminal_window.textbox.append("Couldn't log in\n")
             self.status1("Cannot connect to a device")
             self.top_bar3.password_str.set("")
             self.top_bar1.tkraise()
             return
         finally:
             self.top_bar3.password_str.set("")
-            self.top_bar2.tkraise()
+            self.top_bar2.tkraise()  # this may not actually happen til we get back to the mainloop
 
         if globe.dut is None:
-            self.status1("Cannot connect to device at " + connection[0] + ':' + connection[1])
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
             return
         if not success:
             self.status1("Cannot connect to device at that address")
             return
         self.refresh_gui()
-        self.status1("Connected to device at "+connection[0]+':'+connection[1])
+        self.status1("Connected to device at " + globe.connection[0] + ':' + globe.connection[1])
         # TODO put IP address in title bar?
+        #self.poll_for_overpower_bypass()
+        #self.listen_for_overpower_bypass()
 
 
     def refresh_gui(self):
@@ -757,24 +771,24 @@ class MainWindow(tk.Frame):
 
     def poll_for_overpower_bypass(self):
         pass
-        # if self.overpower_bypass_b.get():
-        #     if globe.dut is not None:
-        #         if globe.dut.port.is_open():
-        #            try:
-        #               op = globe.dut.get_overpower_status()
-        #            except bbuq.UltraQResponseError as e:
-        #                self.status1("Bad or no response from device")
-        #                return
-        #            except bbuq.UltraQLoggedOutError as e:
-        #                self.status1("Not Connected to Device")
-        #                return
-        #            if op:
-        #                 self.status_bar3.config(text = "OVER POWER BYPASS")
-        #            else:
-        #                 self.status_bar3.config(text = "")
-        # else:
-        #     self.status_bar3.config(text = "")
-        # self.after(poll_timing, self.poll_for_overpower_bypass)
+        if self.overpower_bypass_b.get():
+            if globe.dut is not None:
+                if globe.dut.port.is_open():
+                    try:
+                        op = globe.dut.get_overpower_status()
+                    except bbuq.UltraQResponseError as e:
+                        self.status1("Bad or no response from device")
+                        return
+                    except bbuq.UltraQLoggedOutError as e:
+                        self.status1("Not Connected to Device")
+                        return
+                    if op:
+                        self.status_bar3.config(text = "OVER POWER BYPASS")
+                    else:
+                        self.status_bar3.config(text = "")
+        else:
+            self.status_bar3.config(text = "")
+        self.after(poll_timing, self.poll_for_overpower_bypass)
 
 
     # def listen_for_overpower_bypass(self):
@@ -783,13 +797,8 @@ class MainWindow(tk.Frame):
     #         if globe.dut.port.is_open():
     #             try:
     #                 op = globe.dut.port.read()
-    #             # except bbuq.UltraQResponseError as e:
-    #             #     self.status1("Bad or no response from device")
-    #             #     return
-    #             except bbuq.UltraQLoggedOutError as e:
-    #                 logger.error(e.__class__)
-    #                 self.status1("Not Connected to Device")
-    #                 return
+    #             except Exception as e:
+    #                  logger.error(e.__class__)
     #             if op is not None:
     #                 if "OVERPOWER" in op:
     #                     self.status_bar3.config(text = "OVERPOWER")
@@ -799,9 +808,8 @@ class MainWindow(tk.Frame):
     #                     self.update()
     #             else:
     #                 self.status_bar3.config(text = "")
-    #     # else:
-    #     #    pass
-    #     # self.status_bar3.config(text = "")
+    #     else:
+    #         self.status_bar3.config(text = "")
     #     self.after(poll_timing, self.listen_for_overpower_bypass)
 
 

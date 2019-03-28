@@ -82,8 +82,7 @@ def open_dut(connection, output, kind):
         serial_port_num = parse_comport_name(connection)
     dut = bbuq.UltraQ(connection, output, kind) # dumb constructor
     try:
-        if dut.connect():
-            success = dut.login()
+        success =  dut.connect()
     except (OSError, bbuq.UltraQError) as e:
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
