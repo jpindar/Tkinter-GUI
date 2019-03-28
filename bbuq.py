@@ -56,7 +56,7 @@ class UltraQResponseError(UltraQError):
 
 
 
-def correct_id(s):
+def is_correct_id(s):
     if s is None:
         return False
     s2 = s.upper()
@@ -125,7 +125,7 @@ class UltraQ:
                 self.output.append(e.strerror)     # "a connection attempt failed because.....
                 return False
             except Exception as e:
-                logger.error(e.__class__)  # Value Error? TypeError? happens due to a malforned URL, or if it is None
+                logger.error(e.__class__)  # Value Error? TypeError? happens due to a malformed URL, or if it is None
                 logger.error("can't create socketdevice or open network socket")
                 # output.append("Can't open the network connection " + connection[0] + ':' + str(connection[1]) + "\n")
                 return False
@@ -157,7 +157,7 @@ class UltraQ:
                 logger.error(e.__class__)
                 break
 
-            if correct_id(s):  # we are logged in or don't need to log in
+            if is_correct_id(s):  # we are logged in or don't need to log in
                 break   # break out of the while loop
             if self.kind == globe.DUTKind.network:
                 if s == 'password:':  # if dut is asking for a password
@@ -184,7 +184,7 @@ class UltraQ:
                         logger.info("response is 'OK'")
                         s = ""
 
-        if correct_id(s):
+        if is_correct_id(s):
             logger.info("ID is correct, reading some data from device")
             self.initialize_me()
             logger.info("Connected\n")
