@@ -63,6 +63,14 @@ def is_correct_id(s):
     return bool(s2[:7] == "ULTRA-Q")
 
 
+def is_password_prompt(s):
+    if s is None:
+        return False
+    if s[-9:] == 'password:':
+        return True
+    return False
+
+
 
 class UltraQ:
     """
@@ -160,7 +168,7 @@ class UltraQ:
             if is_correct_id(s):  # we are logged in or don't need to log in
                 break   # break out of the while loop
             if self.kind == globe.DUTKind.network:
-                if s == 'password:':  # if dut is asking for a password
+                if is_password_prompt(s):
                     logger.info("sending password")
                     try:
                         self.port.write(globe.password + '\r')
