@@ -106,10 +106,11 @@ class SocketDevice:
 
         logger.info("opening TCP socket " + str(connection[0]) + ':' + str(connection[1]))
         # dt = socket.getdefaulttimeout()
+        # logger.info("socket default timeout setting is " + str(dt))
         # socket.setdefaulttimeout()
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # t = self.sock.gettimeout()
+            # logger.info("socket timeout setting is " + str(self.sock.gettimeout()))
             # these apparently redundant parenthesis are not redundant
             self.sock.connect((connection[0], int(connection[1])))
         except OSError as e:
@@ -119,7 +120,7 @@ class SocketDevice:
             #  This happens with a valid but non=existant url
             #
             logger.warning("connection attempt failed\r\n")
-            logger.warning(e.__class__)    # TimeoutError
+            logger.warning(e.__class__)    # TimeoutError  or #ConnectionRefusedError
             logger.warning("error " + str(e.errno) + " " +e.__doc__)
             logger.warning(e.strerror)
             raise e
@@ -188,7 +189,20 @@ class SocketDevice:
             pass  # not sure how to handle this
         return True
 
-
+    """
+    select.Select
+    The first three arguments are sequences of 'waitable objects': either integers representing file descriptors
+    or objects with a parameterless method named fileno() returning such an integer:
+    rlist: wait until ready for reading
+    wlist: wait until ready for writing
+    xlist: wait for an 'exceptional condition' (see the manual page for what your system considers such a condition)
+    Empty sequences are allowed, but acceptance of three empty sequences is platform-dependent.
+    The optional timeout argument specifies a time-out as a floating point number in seconds. When the timeout argument
+    is omitted the function blocks until at least one file descriptor is ready. A time-out value of zero specifies a
+    poll and never blocks.
+    The return value is a triple of lists of objects that are ready: subsets of the first three arguments. When the
+    time-out is reached without a file descriptor becoming ready, three empty lists are returned.
+    """
     def is_ready_to_read(self):
         # pylint: disable=unused-variable
         timeout = 10

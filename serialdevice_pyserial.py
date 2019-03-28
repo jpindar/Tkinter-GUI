@@ -86,12 +86,12 @@ class SerialDevice:
         except [serial.SerialException, serial.SerialTimeoutException] as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
-            logger.warn(e.__doc__)
+            logger.warning(e.__doc__)
             return False
         except Exception as e:
             logger.warning("SerialDevice.openPort: Can't open that serial port\r\n")
             logger.warning(e.__class__)
-            logger.warn(e.__doc__)
+            logger.warning(e.__doc__)
             return False
         else:
             # assert isinstance(self.comPort, pyvisa.resources.serial.SerialInstrument)

@@ -57,14 +57,14 @@ def close_dut():
     return
 
 
-def parse_comport_name(connection):
-    if isinstance(connection[0], str):
-        if connection[0][:4]=='COM:':
-            connection[0] = int(connection[0][4:])
+def parse_comport_name(c):
+    if isinstance(c[0], str):
+        if c[0][:4]=='COM:':
+            c[0] = int(c[0][4:])
         else:
-            if connection[0][:3]=='COM':
-                connection[0] = int(connection[0][3:])
-    return int(connection[0])
+            if c[0][:3]=='COM':
+                c[0] = int(c[0][3:])
+    return int(c[0])
 
 
 
