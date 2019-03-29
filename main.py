@@ -4,7 +4,7 @@
 a simple Python3.4 GUI using pySerial and tkinter
 Project: BBUQ GUI
 File: main.py
-Date: 8/2018
+Date: 3/2019
 Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 """
 # TODO add logo on help and about boxes
@@ -41,8 +41,8 @@ import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
-const.VERSION = "v1.07"
-const.BUILD = "1.07.0"
+const.VERSION = "v1.08"
+const.BUILD = "1.08.0"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
