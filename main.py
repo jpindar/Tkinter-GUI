@@ -10,6 +10,7 @@ Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 # TODO add logo on help and about boxes
 # TODO input power indicator?
 # TODO help file (esp related to atten range, step size)
+import json
 
 ENABLE_LOGGING = False
 log_filename = 'Ultra-Q.log'
@@ -45,6 +46,7 @@ const.BUILD = "1.07.0"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
+password_file = "settings.txt"
 
 
 class MainWindow(tk.Frame):
@@ -501,7 +503,18 @@ class MainWindow(tk.Frame):
             return
         logger.info("setting the save_password to " + str(s))
         self.save_password_b.set(s)
+        if s:  # you just checked the box
+            save_password_to_file()
 
+        if not s:   # when you just unchecked the box
+            # not sure if clearing these is the expected behavior
+            # self.top_bar3.password_str.set("")
+            # self.top_bar2.remote_address_str.set("")
+            fname = sys.path[0] + "/" + password_file
+            try:
+                os.remove(fname)
+            except OSError as e:
+                pass
 
     def fast_baud_handler(self, event=None):
         """
@@ -740,6 +753,8 @@ class MainWindow(tk.Frame):
         if not success:
             self.status1("Cannot connect to device at that address")
             return
+        if self.save_password_b.get():
+            save_password_to_file()
         self.refresh_gui()
         self.status1("Connected to device at " + globe.connection[0] + ':' + globe.connection[1])
         # TODO put IP address in title bar?
@@ -785,7 +800,6 @@ class MainWindow(tk.Frame):
 
 
     def poll_for_overpower_bypass(self):
-        pass
         if self.overpower_bypass_b.get():
             if globe.dut is not None:
                 if globe.dut.port.is_open():
@@ -826,6 +840,50 @@ class MainWindow(tk.Frame):
     #     else:
     #         self.status_bar3.config(text = "")
     #     self.after(poll_timing, self.listen_for_overpower_bypass)
+
+
+def save_password_to_file():
+    data = {"address": app.top_bar2.remote_address_str.get(),
+            "password": app.top_bar3.password_str.get(),
+            }
+    print(sys.path[0])
+    # _filename = tk.filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Documents", "*.txt"), ("All Files", "*.*")])
+    fname = sys.path[0] + "/" + password_file
+    if not fname:
+        return
+    try:
+        with open(fname, 'w') as the_file:
+            json.dump(data, the_file, indent = 4, sort_keys = True)
+            the_file.close()
+    except IOError as e:
+        logmsg = "Error while trying to save the file "
+        logger.warning(logmsg)
+        logger.warning(e.__class__)
+        tmb.showerror(title="File Error", message="Error while saving settings.", icon='error')
+
+
+
+def read_password_from_file():
+    # If there isn't a file, that's OK
+    #if there is, put addr in self.top_bar2.remote_address_str
+    # and pwd in self.top_bar3.password_str
+    # app.top_bar2.remote_address_str.set("10.0.1.253")
+    # app.top_bar3.password_str.set("Ultra-Q")
+    print(sys.path[0])
+    print(os.path.dirname(os.path.realpath(__file__)))
+    fname = sys.path[0] + "/" + password_file
+    logger.info("filename to load is " + fname)
+    try:
+        with open(fname) as f:
+            data = json.load(f)
+        app.save_password_b.set(True)
+    except:
+        app.save_password_b.set(False)
+        return
+
+    logger.info(str(data))
+    app.top_bar2.remote_address_str.set(data['address'])
+    app.top_bar3.password_str.set(data['password'])
 
 
 def show_terminal():
@@ -917,6 +975,7 @@ root.bind_all('<Escape>', user_interrupt_handler)
 root.bind('<KeyPress-F1>', display_help_messagebox)
 root.protocol('WM_DELETE_WINDOW', exit_handler)  # override the Windows "X" button
 # app.comport_handler()  # this updates the port number in globe, so the terminal window can use it if necessary
+read_password_from_file()
 app.enable_widgets(False)
 root.mainloop()
 
