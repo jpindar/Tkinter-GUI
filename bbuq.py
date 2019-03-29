@@ -498,13 +498,13 @@ class UltraQ:
             self.port.write(msg)
             r = self.port.read()
         except OSError as e:
+            logger.error(e.__class__)
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
             else:
                 self.output.append("\nCommunication Error\n")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -814,6 +814,8 @@ class UltraQ:
 
 
     def get_overpower_bypass_enable(self):
+        if self.revision == 0.0:
+            self.revision = self.get_revision()
         r = None
         try:
             if float(self.revision) < 2.02:
@@ -828,6 +830,8 @@ class UltraQ:
         return r
 
     def set_overpower_bypass_enable(self, b):
+        if self.revision == 0.0:
+            self.revision = self.get_revision()
         try:
             if float(self.revision) < 2.02:
                 self.set_any_boolean("OVERPOWERBYPASS", b)
