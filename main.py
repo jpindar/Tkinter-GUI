@@ -106,10 +106,8 @@ class MainWindow(tk.Frame):
             self.address_label.grid(row=0, column=0, sticky='e')
             self.remote_address_box = tk.Entry(self, textvariable=self.remote_address_str,width=15)
             self.remote_address_box.grid(row=0, column=1, padx=5,sticky=tk.W)
-            # self.remote_address_box.bind('<Return>', self.remote_address_box_handler)
-            # self.remote_address_box.config(state=tk.DISABLED)
-            # self.remote_port_box..bind('<Return>', gparent.connect_button_handler)
             self.remote_address_str.set(globe.remote_address)
+            self.remote_address_box.bind('<Return>', gparent.connect_button_handler2)
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
                                             command=gparent.connect_button_handler2)
             self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
@@ -123,7 +121,7 @@ class MainWindow(tk.Frame):
             self.password_label.grid(row=0, column=0, sticky='e')
             self.password_box = tk.Entry(self, textvariable=self.password_str,width=15)
             self.password_box.grid(row=0, column=1, padx=5,sticky=tk.W)
-            self.password_box.bind('<Return>', gparent.connect_button_handler2)
+            self.password_box.bind('<Return>', gparent.connect_button_handler3)
             self.button_connect = tk.Button(self, text="Connect", bg='light grey',
                                             command=gparent.connect_button_handler3)
             self.button_connect.grid(row=0, column=3, padx=2, pady=2, sticky=tk.E)
