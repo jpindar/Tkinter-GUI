@@ -10,10 +10,11 @@ Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 # TODO add logo on help and about boxes
 # TODO input power indicator?
 # TODO help file (esp related to atten range, step size)
-import json
+
 
 ENABLE_LOGGING = False
 log_filename = 'Ultra-Q.log'
+
 import inspect
 import logging
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ else:
     logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
 
 logger.info("testing logger")
+import json
 import os
 import tkinter as tk
 import tkinter.messagebox as tmb
@@ -508,11 +510,8 @@ class MainWindow(tk.Frame):
             # not sure if clearing these is the expected behavior
             # self.top_bar3.password_str.set("")
             # self.top_bar2.remote_address_str.set("")
-            fname = sys.path[0] + "/" + password_file
-            try:
-                os.remove(fname)
-            except OSError as e:
-                pass
+            delete_password_file()
+
 
     def fast_baud_handler(self, event=None):
         """
@@ -741,6 +740,7 @@ class MainWindow(tk.Frame):
             self.top_bar1.tkraise()
             return
         finally:
+            # not sure if this is desired behavior
             if not self.save_password_b.get():
                 self.top_bar3.password_str.set("")
             self.top_bar2.tkraise()  # this may not actually happen til we get back to the mainloop
@@ -841,23 +841,24 @@ class MainWindow(tk.Frame):
 
 
 def save_password_to_file():
+    # should this save the password from app.top_bar3.password_str.get()
+    # or from globe.password?
+    # it depends on what the desired behavior is
     data = {"address": app.top_bar2.remote_address_str.get(),
             "password": app.top_bar3.password_str.get(),
             }
-    print(sys.path[0])
-    # _filename = tk.filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Documents", "*.txt"), ("All Files", "*.*")])
-    fname = sys.path[0] + "/" + password_file
-    if not fname:
-        return
     try:
+        fname = user_path(password_file)
+        # open() will not create directories, so create them if they don't exist
+        os.makedirs(os.path.dirname(fname), exist_ok=True)
         with open(fname, 'w') as the_file:
             json.dump(data, the_file, indent = 4, sort_keys = True)
             the_file.close()
-    except IOError as e:
-        logmsg = "Error while trying to save the file "
+    except (OSError,IOError) as e:
+        logmsg = "Error while trying to save a file "
         logger.warning(logmsg)
         logger.warning(e.__class__)
-        tmb.showerror(title="File Error", message="Error while saving settings.", icon='error')
+        # tmb.showerror(title="File Error", message="Error while saving settings."+fname, icon='error')
 
 
 
@@ -865,23 +866,38 @@ def read_password_from_file():
     # If there isn't a file, that's OK
     #if there is, put addr in self.top_bar2.remote_address_str
     # and pwd in self.top_bar3.password_str
+    # if the file exists, set "save password" to true
+    # if not, set it to false
     # app.top_bar2.remote_address_str.set("10.0.1.253")
     # app.top_bar3.password_str.set("Ultra-Q")
-    print(sys.path[0])
-    print(os.path.dirname(os.path.realpath(__file__)))
-    fname = sys.path[0] + "/" + password_file
-    logger.info("filename to load is " + fname)
     try:
+        fname = user_path(password_file)
+        logger.info("filename to load is " + fname)
         with open(fname) as f:
             data = json.load(f)
         app.save_password_b.set(True)
-    except:
+    except (OSError,IOError) as e:
+        logmsg = "Error while trying to read a file "
+        logger.warning(logmsg)
+        logger.warning(e.__class__)
+        app.save_password_b.set(False)
+    except Exception as e:
+        logger.error(e.__class__)
         app.save_password_b.set(False)
         return
-
-    logger.info(str(data))
+    # logger.info(str(data))
     app.top_bar2.remote_address_str.set(data['address'])
     app.top_bar3.password_str.set(data['password'])
+
+
+def delete_password_file():
+    try:
+        fname = user_path(password_file)
+        os.remove(fname)
+    except (OSError,IOError) as e:
+        logmsg = "Error while trying to delete a file "
+        logger.warning(logmsg)
+        logger.warning(e.__class__)
 
 
 def show_terminal():
@@ -907,7 +923,8 @@ def display_help_messagebox(event=None):
     help_string = "Contact TelGaAs Inc. at telgaas.com for help\n\n"
     help_string += "USB drivers for Ultra-Q filters are available at \n"
     help_string += "http://www.ftdichip.com/Drivers/VCP.htm\n\n"
-    help_string += "This program operates at 19200 baud except when the 115200 baud option is selected."
+    help_string += "This program operates at 19200 baud except when the 115200 baud option is selected.\n\n"
+    # help_string += user_path(password_file)
     tmb.showinfo("Help", help_string, icon=tmb.INFO)
     return 'break'
 
@@ -926,12 +943,30 @@ def exit_handler(event=None):
 
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller
+    """ This is for getting resources that were packaged with the code.
+        Get absolute path to resource, works for dev and for PyInstaller
         PyInstaller creates a temp folder and stores path in _MEIPASS
         if sys doesn't have _MEIPASS, default to the path to __file__  (i.e. this file)
     """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
+
+
+def user_path(relative_path):
+    """ This is for gettign and saving stuff like config files
+        that need to change at runtime and persist to the next run
+        Unfortunately, many of the ways of getting a user's directory
+        are unreliable, and many explicit paths don't work (due to permissions?)
+    """
+    # my_home = os.getenv("HOME") # doesn't always work - some systems have no HOME env variable or a bad one
+    # my_home = expanduser("~") # works in IDE, works .exe on XOTIC, but points to SPB_Data .exe on VAIO
+    # my_home = os.getenv('USERPROFILE') # this works! (so far...)
+    my_home = os.path.expanduser(os.getenv('USERPROFILE')) # this works! (so far...)
+    p = os.path.join(my_home, "bbuq", relative_path)
+    # p = 'C:\\foo.txt'  nope
+    # p = 'C:\\Users\\jpindar\\Dropbox\\_TELGAAS\\BBUQ\\_SOFTWARE\\settings.txt' Yep
+    # p = 'C:\\Users\\jpindar\\baz\\settings.txt' only if baz already exists
+    return p
 
 
 def set_root_size():
