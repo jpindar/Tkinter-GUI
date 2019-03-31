@@ -873,16 +873,29 @@ def read_password_from_file():
     try:
         fname = user_path(password_file)
         logger.info("filename to load is " + fname)
-        with open(fname) as f:
-            data = json.load(f)
-        app.save_password_b.set(True)
+        if not os.path.isfile(fname):
+            return
     except (OSError,IOError) as e:
         logmsg = "Error while trying to read a file "
         logger.warning(logmsg)
         logger.warning(e.__class__)
         app.save_password_b.set(False)
+        return
+
+    try:
+        with open(fname) as f:
+            data = json.load(f)
+        app.save_password_b.set(True)
+    except (OSError,IOError,ValueError,KeyError) as e:
+        logmsg = "Error while trying to read a file "
+        logger.warning(logmsg)
+        logger.warning(e.__class__)
+        app.save_password_b.set(False)
+        return
     except Exception as e:
-        logger.error(e.__class__)
+        logmsg = "Error while trying to read a file "
+        logger.warning(logmsg)
+        logger.warning(e.__class__)
         app.save_password_b.set(False)
         return
     # logger.info(str(data))
