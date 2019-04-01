@@ -44,8 +44,8 @@ import bbuq
 
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
-const.VERSION = "v1.08"
-const.BUILD = "1.08.0"
+const.VERSION = "v1.09"
+const.BUILD = "1.09.0"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
