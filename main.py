@@ -744,8 +744,8 @@ class MainWindow(tk.Frame):
             return
         finally:
             # not sure if this is desired behavior
-            if not self.save_password_b.get():
-                self.top_bar3.password_str.set("")
+            # if not self.save_password_b.get():
+            #    self.top_bar3.password_str.set("")
             self.top_bar2.tkraise()  # this may not actually happen til we get back to the mainloop
 
         if globe.dut is None:
