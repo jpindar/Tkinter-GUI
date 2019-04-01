@@ -381,10 +381,10 @@ class MainWindow(tk.Frame):
             # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device",bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device",bg = 'red')
             return
         except ValueError as e:
             logger.warning(e.__class__)
@@ -405,10 +405,10 @@ class MainWindow(tk.Frame):
             # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         except ValueError as e:
             logger.warning(e.__class__)
@@ -429,10 +429,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_bypass(b)
             r = globe.dut.get_bypass()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self.bypass_i.set(r)
 
@@ -451,10 +451,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_overpower_bypass_enable(b)
             r = globe.dut.get_overpower_bypass_enable()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self.overpower_bypass_b.set(r)
 
@@ -487,10 +487,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_eeprom_write_mode(b)
             r = globe.dut.get_eeprom_write_mode()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self.write_b.set(r)
 
@@ -536,12 +536,12 @@ class MainWindow(tk.Frame):
             if globe.dut is not None:
                 globe.dut.set_baud(b)
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except Exception as e:
             logger.info(e.__class__)
         # except bbuq.UltraQLoggedOutError as e:
-        #    self.status1("Not Connected to Device")
+        #    self.status1("Not Connected to Device", bg = 'SystemButtonFace')
         #    return
         # self.fast_baud_b.set(b)
 
@@ -559,10 +559,10 @@ class MainWindow(tk.Frame):
             r = globe.dut.get_uf_mode()
             n = globe.dut.get_ultrafine()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
 
         self._ufmode_i.set(r)
@@ -588,10 +588,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_ultrafine(s)
             f = globe.dut.get_ultrafine()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self._uf_s.set(str(f))
 
@@ -607,10 +607,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_ultrafine(f)
             f = globe.dut.get_ultrafine()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self._uf_s.set(str(f))
 
@@ -627,10 +627,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_freq(f)
             f2 = globe.dut.get_freq()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         else:
             self._freq_s.set("{:.6f}".format(f2))
@@ -650,17 +650,17 @@ class MainWindow(tk.Frame):
             globe.dut.set_freq(f)
             f = globe.dut.get_freq()
         except bbuq.UltraQResponseError as e:
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         self._freq_s.set("{:.6f}".format(f))
 
 
     def connect_button_handler(self, event=None):
         success = None
-        self.status1(" ")
+        self.status1(" ", bg = 'SystemButtonFace')
         self.enable_widgets(False)
         if globe.dut is not None:
             globe.close_dut()  # this sets globe.dut to None
@@ -671,29 +671,29 @@ class MainWindow(tk.Frame):
         else:
             if self.top_bar1.comport_str.get() == '':
                 if not self.top_bar1.populate_comport_menu():
-                    self.status1("Cannot find any com ports. Connect device and try again.")
+                    self.status1("Cannot find any com ports. Connect device and try again.", bg = 'red')
                 else:
-                    self.status1("")
+                    self.status1("", bg = 'SystemButtonFace')
                 return
             try:
                 s = self.top_bar1.comport_str.get()
-                self.status1("connecting...")
+                self.status1("connecting...", bg = 'SystemButtonFace')
                 success = globe.open_dut([s], self.terminal_window.textbox,globe.DUTKind.serial)
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("Can't open a serial port\n")
                 self.terminal_window.textbox.append("Couldn't open the serial port\n")
-                self.status1("Cannot connect to a device on that port")
+                self.status1("Cannot connect to a device on that port", bg = 'red')
                 return
         # would dut be None if it had been disconnected? No.
         if globe.dut is None:
-            self.status1("Cannot connect to device on that port")
+            self.status1("Cannot connect to device on that port", bg = 'red')
             return
         if not success:
-            self.status1("Cannot connect to device on that port")
+            self.status1("Cannot connect to device on that port", bg = 'red')
             return
         self.refresh_gui()
-        self.status_bar1.config(text = "Connected")  # self.status_bar1.config(text = "Connected to " + s)
+        self.status1("Connected", bg = 'SystemButtonFace')  # self.status_bar1.config(text = "Connected to " + s)
         #self.poll_for_overpower_bypass()
         #self.listen_for_overpower_bypass()
 
@@ -704,7 +704,7 @@ class MainWindow(tk.Frame):
         success = None
         globe.connection = [globe.remote_address, globe.remote_port]
         socketdevice.parse_url(globe.connection)  # parse it here because we want it to display nicely
-        self.status1("Connecting to device at " + globe.connection[0] + ':' + globe.connection[1])
+        self.status1("Connecting to device at " + globe.connection[0] + ':' + globe.connection[1], bg = 'SystemButtonFace')
 
         try:
             success = globe.open_dut(globe.connection, app.terminal_window.textbox, kind = globe.DUTKind.network)
@@ -712,11 +712,11 @@ class MainWindow(tk.Frame):
             logger.error(e.__class__)
             logger.error("Can't open a socket\n")
             app.terminal_window.textbox.append("Couldn't open the socket\n")
-            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1], bg = 'red')
             success = False
 
         if not success:
-            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1], bg = 'red')
             return   # give up
         else:
             self.top_bar3.tkraise()
@@ -734,7 +734,7 @@ class MainWindow(tk.Frame):
             logger.error(e.__class__)
             logger.error("Can't log in\n")
             app.terminal_window.textbox.append("Couldn't log in\n")
-            self.status1("Cannot connect to a device")
+            self.status1("Cannot connect to a device", bg = 'red')
             if not self.save_password_b.get():
                 self.top_bar3.password_str.set("")
             self.top_bar1.tkraise()
@@ -746,15 +746,15 @@ class MainWindow(tk.Frame):
             self.top_bar2.tkraise()  # this may not actually happen til we get back to the mainloop
 
         if globe.dut is None:
-            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1])
+            self.status1("Cannot connect to device at " + globe.connection[0] + ':' + globe.connection[1], bg = 'red')
             return
         if not success:
-            self.status1("Cannot connect to device at that address")
+            self.status1("Cannot connect to device at that address", bg = 'red')
             return
         if self.save_password_b.get():
             save_password_to_file()
         self.refresh_gui()
-        self.status1("Connected to device at " + globe.connection[0] + ':' + globe.connection[1])
+        self.status1("Connected to device at " + globe.connection[0] + ':' + globe.connection[1], bg = 'SystemButtonFace')
         # TODO put IP address in title bar?
         #self.poll_for_overpower_bypass()
         #self.listen_for_overpower_bypass()
@@ -783,15 +783,15 @@ class MainWindow(tk.Frame):
             self._uf_s.set(str(uf_setting))
         except bbuq.UltraQResponseError as e:
             logger.error(e.__class__)
-            self.status1("Bad or no response from device")
+            self.status1("Bad or no response from device", bg = 'red')
             return
         except bbuq.UltraQLoggedOutError as e:
             logger.error(e.__class__)
-            self.status1("Not Connected to Device")
+            self.status1("Not Connected to Device", bg = 'red')
             return
         except bbuq.UltraQTimeoutError as e:
             logger.error(e.__class__)
-            self.status1("No response from device")
+            self.status1("No response from device", bg = 'red')
             return
         self.enable_widgets(True, uf_mode)
         # self.poll_for_overpower_bypass()
@@ -804,17 +804,17 @@ class MainWindow(tk.Frame):
                     try:
                         op = globe.dut.get_overpower_status()
                     except bbuq.UltraQResponseError as e:
-                        self.status1("Bad or no response from device")
+                        self.status1("Bad or no response from device", bg = 'red')
                         return
                     except bbuq.UltraQLoggedOutError as e:
-                        self.status1("Not Connected to Device")
+                        self.status1("Not Connected to Device", bg = 'red')
                         return
                     if op:
-                        self.status_bar3.config(text = "OVER POWER BYPASS")
+                        self.status_bar3.config(text = "OVER POWER BYPASS", bg = 'red')
                     else:
-                        self.status_bar3.config(text = "")
+                        self.status_bar3.config(text = "", bg = 'SystemButtonFace')
         else:
-            self.status_bar3.config(text = "")
+            self.status_bar3.config(text = "", bg = 'SystemButtonFace' )
         self.after(poll_timing, self.poll_for_overpower_bypass)
 
 
