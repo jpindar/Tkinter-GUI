@@ -34,6 +34,7 @@ import tkinter.messagebox as tmb
 from tkinter import ttk
 from tkinter import font
 import sys
+import cryptlib
 import socketdevice
 import serialdevice_pyserial
 import terminalwindow
@@ -49,7 +50,8 @@ globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
 password_file = "settings.txt"
-key1 = "foo"
+key1 = "NoStepOnSnek1234"
+
 
 class MainWindow(tk.Frame):
     # pylint: disable=too-many-instance-attributes, too-many-ancestors
@@ -221,6 +223,7 @@ class MainWindow(tk.Frame):
         self.image_label = tk.Label(self.top_frame, image=photo, anchor=tk.E, bg = '#D9E5EE')
         self.image_label.photo = photo
         self.image_label.grid(row=0, column=4,sticky=tk.NS + tk.E)
+
 
     def __fill_freq_frame(self):
         self.freq_subframe1 = tk.Frame(self.freq_frame,height=1, width = 4)
@@ -841,11 +844,24 @@ class MainWindow(tk.Frame):
 
 
 def encode(data, key):
-    return data
+    if data == '':
+        data = ' '
+    try:
+        return cryptlib.encrypt(data,key)
+    except Exception as e:
+        return ''
 
 
 def decode(enc, key):
-    return enc
+    try:
+        s = cryptlib.decrypt(enc,key)
+        if s == ' ':
+            s = ''
+        return s
+    except UnicodeDecodeError as e:
+        return ""
+    except Exception as e:
+        return ""
 
 
 def save_password_to_file():
@@ -871,7 +887,6 @@ def save_password_to_file():
         # tmb.showerror(title="File Error", message="Error while saving settings."+fname, icon='error')
 
 
-
 def read_password_from_file():
     # If there isn't a file, that's OK
     #if there is, put addr in self.top_bar2.remote_address_str
@@ -893,8 +908,8 @@ def read_password_from_file():
     try:
         with open(fname) as f:
             data = json.load(f)
-        a = decode(data['1'],k1)
-        p = decode(data['2'],k1)
+        a = decode(data['1'],key1)
+        p = decode(data['2'],key1)
         app.save_password_b.set(True)
         app.top_bar2.remote_address_str.set(a)
         app.top_bar3.password_str.set(p)
