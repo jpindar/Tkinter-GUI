@@ -49,7 +49,7 @@ globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
 password_file = "settings.txt"
-
+key1 = "foo"
 
 class MainWindow(tk.Frame):
     # pylint: disable=too-many-instance-attributes, too-many-ancestors
@@ -840,12 +840,22 @@ class MainWindow(tk.Frame):
     #     self.after(poll_timing, self.listen_for_overpower_bypass)
 
 
+def encode(data, key):
+    return data
+
+
+def decode(enc, key):
+    return enc
+
+
 def save_password_to_file():
     # should this save the password from app.top_bar3.password_str.get()
     # or from globe.password?
     # it depends on what the desired behavior is
-    data = {"address": app.top_bar2.remote_address_str.get(),
-            "password": app.top_bar3.password_str.get(),
+    a = app.top_bar2.remote_address_str.get()
+    p = app.top_bar3.password_str.get()
+    data = {"1": encode(a,key1),
+            "2": encode(p,key1)
             }
     try:
         fname = user_path(password_file)
@@ -868,8 +878,6 @@ def read_password_from_file():
     # and pwd in self.top_bar3.password_str
     # if the file exists, set "save password" to true
     # if not, set it to false
-    # app.top_bar2.remote_address_str.set("10.0.1.253")
-    # app.top_bar3.password_str.set("Ultra-Q")
     try:
         fname = user_path(password_file)
         logger.info("filename to load is " + fname)
@@ -885,9 +893,11 @@ def read_password_from_file():
     try:
         with open(fname) as f:
             data = json.load(f)
+        a = decode(data['1'],k1)
+        p = decode(data['2'],k1)
         app.save_password_b.set(True)
-        app.top_bar2.remote_address_str.set(data['address'])
-        app.top_bar3.password_str.set(data['password'])
+        app.top_bar2.remote_address_str.set(a)
+        app.top_bar3.password_str.set(p)
     except (OSError,IOError,ValueError,KeyError) as e:
         logmsg = "Error while trying to read a file "
         logger.warning(logmsg)
