@@ -11,6 +11,7 @@ Copyright TelGaAS Inc. 2018
 Python 3.4 (We're sticking with 3.4 since that's the last version that works with WinXP, and some customers still use XP.)  
 TKinter (This is already part of most Python installs.)  
 PySerial (https://pypi.python.org/pypi/pyserial)
+PyCrypt  (https://pypi.org/project/pycrypto/)
 
 ### How do I get set up? ###
 
