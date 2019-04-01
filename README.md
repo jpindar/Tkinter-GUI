@@ -17,12 +17,13 @@ PyCrypt  (https://pypi.org/project/pycrypto/)
 
 To run this as python just run main.py
 
-To package this as a standalone executable:
+To package this as a standalone executable using PyInstaller:
 
-Pyinstaller spec files are included
-Put the desired source files, including any images, icons etc.,  in a folder named src  
-Delete any previous build and dist folders  
-Run pyinstaller <name of spec file>  
+Put onefile.spec file and build.bat in a folder
+In that folder create a folder called src, and put the source code and any images, icons etc. in it
+Run build.bat
+PyInstaller will put the new .exe in a folder called dist
+Rename the exe as desired
 
 ### Who do I talk to? ###
 
