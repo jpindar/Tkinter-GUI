@@ -886,6 +886,8 @@ def read_password_from_file():
         with open(fname) as f:
             data = json.load(f)
         app.save_password_b.set(True)
+        app.top_bar2.remote_address_str.set(data['address'])
+        app.top_bar3.password_str.set(data['password'])
     except (OSError,IOError,ValueError,KeyError) as e:
         logmsg = "Error while trying to read a file "
         logger.warning(logmsg)
@@ -899,8 +901,6 @@ def read_password_from_file():
         app.save_password_b.set(False)
         return
     # logger.info(str(data))
-    app.top_bar2.remote_address_str.set(data['address'])
-    app.top_bar3.password_str.set(data['password'])
 
 
 def delete_password_file():
