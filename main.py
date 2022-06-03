@@ -11,22 +11,9 @@ Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 # TODO input power indicator?
 # TODO help file (esp related to atten range, step size)
 
-
-ENABLE_LOGGING = False
-log_filename = 'Ultra-Q.log'
-
 import inspect
 import logging
-logger = logging.getLogger(__name__)
-if ENABLE_LOGGING:
-    logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
-                        level=logging.INFO)
-    # logger.setLevel(logging.CRITICAL)
-    # logging.disable(logging.NOTSET)
-else:
-    logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
-
-logger.info("testing logger")
+from time import time
 import json
 import os
 import tkinter as tk
@@ -42,6 +29,9 @@ import const
 import globe
 import bbuq
 
+
+ENABLE_LOGGING = True
+log_filename = 'Ultra-Q.log'
 __author__ = 'jpindar@jpindar.com'
 const.PROGRAM_NAME = " Ultra-Q "
 const.VERSION = "v1.09"
@@ -51,6 +41,16 @@ globe.unsaved = False
 poll_timing = 1000
 password_file = "settings.txt"
 key1 = "NoStepOnSnek1234"
+logger = logging.getLogger(__name__)
+if ENABLE_LOGGING:
+    logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
+                        level=logging.INFO)
+    # logger.setLevel(logging.CRITICAL)
+    # logging.disable(logging.NOTSET)
+else:
+    logging.disable(999)   # disables all loggers, logger.disabled = True only disables for this file
+
+logger.info("testing logger")
 
 
 class MainWindow(tk.Frame):
@@ -64,10 +64,10 @@ class MainWindow(tk.Frame):
 
 
     class TopBar1(tk.Frame):
-        def __init__(self, parent, gparent,**kw):
+        def __init__(self, parent, gparent, **kw):
             super().__init__(parent, **kw)
             self.comport_str = tk.StringVar()
-            self.comport_label = tk.Label(self, text="Connection",bg='#D9E5EE')
+            self.comport_label = tk.Label(self, text="Connection", bg='#D9E5EE')
             self.comport_label.grid(row=0, column=0, sticky=tk.E)
             self.comport_dropdown = ttk.OptionMenu(self, self.comport_str, command = self.comport_handler)
             self.comport_dropdown.config(width=8)

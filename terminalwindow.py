@@ -5,17 +5,17 @@ Date: Sep-2017
 Version: 1.1
 Author: jeannepindar@gmail.com AKA jpindar@jpindar.com
 """
-ENABLE_LOGGING = False
 
-__author__ = 'jeannepindar@gmail.com'
 import logging
-logger = logging.getLogger(__name__)
-
 import tkinter as tk
 from tkinter import ttk
 import tkinter.scrolledtext as tkst
 import const
 import globe
+logger = logging.getLogger(__name__)
+ENABLE_LOGGING = True
+
+__author__ = 'jeannepindar@gmail.com'
 
 
 class TextBox(tkst.ScrolledText):

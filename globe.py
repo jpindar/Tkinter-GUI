@@ -4,10 +4,12 @@ File: globe.py
 """
 __author__ = 'jpindar@jpindar.com'
 import logging
-logger = logging.getLogger(__name__)
-
 from enum import Enum
 import bbuq
+
+logger = logging.getLogger(__name__)
+
+
 
 # unsaved = False
 # user_interrupt = False

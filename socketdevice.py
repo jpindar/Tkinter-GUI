@@ -5,13 +5,15 @@ File: socketdevice.py
 """
 import ipaddress
 import logging
-logger = logging.getLogger(__name__)
+
 import time
 import select
 import socket
+
 __author__ = 'jpindar@jpindar.com'
 
 read_delay = 0.2
+logger = logging.getLogger(__name__)
 
 
 def parse_url(c):
@@ -20,15 +22,15 @@ def parse_url(c):
     assert isinstance(c[0], str)
     s = c[0]
     assert isinstance(s, str)
-    pos = s.find('https:\\')
-    if pos>=0:
-        s = s[8:] # skip https:\\
-    pos = s.find('http:\\')
-    if pos>=0:
-        s = s[7:] # skip http:\\
-    pos = s.find(':')  # the colon between ip address and port
-    if pos>=0:    # the order of these lines matters
-        c[1] = s[pos+1:]
+    pos = s.find("https:\\")
+    if pos >= 0:
+        s = s[8:]  # skip https:\\
+    pos = s.find("http:\\")
+    if pos >= 0:
+        s = s[7:]  # skip http:\\
+    pos = s.find(":")  # the colon between ip address and port
+    if pos >= 0:  # the order of these lines matters
+        c[1] = s[pos + 1 :]
         c[0] = s[:pos]
     else:
         c[0] = s
@@ -46,8 +48,8 @@ def parse_url(c):
 
 
 def validate_url(connection):
-    #ipaddress.ip_address() fixes leading zeros
-    #and throws reasonable exceptions for malformed addresses
+    # ipaddress.ip_address() fixes leading zeros
+    # and throws reasonable exceptions for malformed addresses
     z = ipaddress.ip_address(connection[0])
     connection[0] = z.exploded  # are these the same?
     connection[0] = str(z)
@@ -61,6 +63,7 @@ class SocketDevice:
     """
     A TCP port, created by socket
     """
+
     def __init__(self):
         """
         constructor for serial device, no parameters
@@ -72,39 +75,38 @@ class SocketDevice:
         self.port_num = None
         self.sock = None
 
-
     def open_port(self, connection):
         """
-         opens the port with fixed parameters in connection_info
-         remote_host is an IP address in string form
-         remote_port is an integer
-         these are separated by a colon
+        opens the port with fixed parameters in connection_info
+        remote_host is an IP address in string form
+        remote_port is an integer
+        these are separated by a colon
 
-          TODO  set timeout, default is too long?, ideally make this configurable
+         TODO  set timeout, default is too long?, ideally make this configurable
         """
         self.close_port()
         parse_url(connection)
         try:
             connection = validate_url(connection)
-        except (OSError,ipaddress.AddressValueError,ipaddress.NetmaskValueError) as e:
+        except (OSError, ipaddress.AddressValueError, ipaddress.NetmaskValueError) as e:
             # Typical error is:
             # 11004 socket.gaierror   can be caused by malformed URL  "getaddrinfo failed"
             # or?
             #
             logger.warning("bad address\r\n")
-            logger.warning(e.__class__)    # socket.gaierror
-            logger.warning("error " + str(e.errno) + " " +e.__doc__)
+            logger.warning(e.__class__)  # socket.gaierror
+            logger.warning("error " + str(e.errno) + " " + e.__doc__)
             logger.warning(e.strerror)
             raise e
         except (ValueError, TypeError) as e:
             #
             #
             logger.warning("bad URL or IP address\r\n")
-            logger.warning(e.__class__)    # socket.gaierror
+            logger.warning(e.__class__)  # socket.gaierror
             logger.warning(e.args[0])
             logger.warning(e.__doc__)
 
-        logger.info("opening TCP socket " + str(connection[0]) + ':' + str(connection[1]))
+        logger.info("opening TCP socket " + str(connection[0]) + ":" + str(connection[1]) )
         # dt = socket.getdefaulttimeout()
         # logger.info("socket default timeout setting is " + str(dt))
         # socket.setdefaulttimeout()
@@ -120,8 +122,8 @@ class SocketDevice:
             #  This happens with a valid but non=existant url
             #
             logger.warning("connection attempt failed\r\n")
-            logger.warning(e.__class__)    # TimeoutError  or #ConnectionRefusedError
-            logger.warning("error " + str(e.errno) + " " +e.__doc__)
+            logger.warning(e.__class__)  # TimeoutError  or #ConnectionRefusedError
+            logger.warning("error " + str(e.errno) + " " + e.__doc__)
             logger.warning(e.strerror)
             raise e
         except [ValueError] as e:
@@ -143,13 +145,12 @@ class SocketDevice:
             logger.info("SocketDevice.openPort: opened a " + str(self.sock.__class__))
             return True
 
-
     def is_open(self):
         """
         This is really just checking if open_port() succeeded
         :rtype: boolean
         """
-        if not hasattr(self, 'sock'):
+        if not hasattr(self, "sock"):
             logger.warning("isOpen():port does not exist")
             return False
         if self.sock is None:
@@ -165,12 +166,12 @@ class SocketDevice:
         """
         response = None
         bytes_sent = 0
-        if not hasattr(self, 'sock'):
+        if not hasattr(self, "sock"):
             logger.warning("can't write to non-existent socket")
             return response
         # msg = msg + "\n"
         # logger.info("SocketDevice.write: writing " + str(msg) + " to socket")
-        msg_bytes = msg.encode(encoding='UTF-8')
+        msg_bytes = msg.encode(encoding="UTF-8")
         # if self.is_ready_to_write():
         #     pass
         try:
@@ -182,7 +183,7 @@ class SocketDevice:
             logger.warning(e.__class__)
             logger.warning(e.__doc__)
             raise e  # TODO test this path
-        except Exception as e:   # should never happen?
+        except Exception as e:  # should never happen?
             logger.error(e.__class__)
             raise e
         if len(msg_bytes) != bytes_sent:
@@ -203,22 +204,23 @@ class SocketDevice:
     The return value is a triple of lists of objects that are ready: subsets of the first three arguments. When the
     time-out is reached without a file descriptor becoming ready, three empty lists are returned.
     """
+
     def is_ready_to_read(self):
         # pylint: disable=unused-variable
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock], [self.sock], [self.sock], timeout)
         return bool(self.sock in ready_to_read)
 
     def is_ready_to_write(self):
         # pylint: disable=unused-variable
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock], [self.sock], [self.sock], timeout)
         return bool(self.sock in ready_to_write)
 
     def is_in_error(self):
         # pylint: disable=unused-variable
         timeout = 10
-        ready_to_read, ready_to_write, in_error = select.select([self.sock],[self.sock],[self.sock],timeout)
+        ready_to_read, ready_to_write, in_error = select.select([self.sock], [self.sock], [self.sock], timeout)
         return bool(self.sock in in_error)
 
     def read(self):
@@ -229,7 +231,7 @@ class SocketDevice:
         MAX_ATTEMPTS = 10
         done = False
         self.sock.setblocking(False)
-        r_bytes = ""   # not None, because we want its len to be 0. can't take the len of None
+        r_bytes = "" # not None, because we want its len to be 0. can't take the len of None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
         if self.is_ready_to_read():
             pass
@@ -245,7 +247,7 @@ class SocketDevice:
                 logger.warning(e.strerror)
                 logger.warning(e.__cause__)
                 return None
-            except (IOError,OSError) as e:
+            except (IOError, OSError) as e:
                 # if using nonblocking I/O, error 10035 happens when there's
                 # no data to read yet. This would be OK, but:
                 # TODO add some limit so it can't get 'stuck' here
@@ -273,19 +275,18 @@ class SocketDevice:
             if r_bytes is None:
                 done = False
             else:
-                done = (len(r_bytes)>0)
+                done = len(r_bytes) > 0
 
-        r_str = str(r_bytes.decode(encoding='UTF-8'))    # cast bytes to string
+        r_str = str(r_bytes.decode(encoding="UTF-8"))  # cast bytes to string
         # logger.info("SocketDevice.read: got <" + r_str + ">")
-        r_str = r_str.strip('\r\n')
+        r_str = r_str.strip("\r\n")
         return r_str
-
 
     def close_port(self):
         # logger.info("close_port: closing socket")
-        if not hasattr(self, 'sock'):
+        if not hasattr(self, "sock"):
             return
-        if not hasattr(self.sock, 'close'):
+        if not hasattr(self.sock, "close"):
             return
         try:
             self.sock.close()
@@ -317,5 +318,3 @@ class SocketDevice:
     #         raise e  # let .read() handle it
     #     return bytes(line)
     #
-
-
