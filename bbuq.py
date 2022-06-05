@@ -88,7 +88,7 @@ class UltraQ:
         constructor for an Ultra-Q device
         connection is a list containing either a serial port number
         or an ip address and a port
-        output is anything with an .append(string) method
+        output is anything with an .append(string) method, typically a textbox
         kind is an enum representing the type of connection:
         serial, network or mock
 
@@ -129,7 +129,8 @@ class UltraQ:
                 success = self.port.open_port(self.connection)  # this is what actually does something
             except OSError as e:
                 # Typical error is:
-                # [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time,
+                # [WinError 10060] A connection attempt failed because the connected party did not properly
+                # respond after a period of time,
                 #  or established connection failed because connected host has failed to respond
                 # This error was already logged, only re-raised to move this UI stuff to this higher level
                 self.output.append(e.__doc__)      # "Timeout expired"
@@ -376,7 +377,7 @@ class UltraQ:
                 self.output.append("\nCommunication Error\n")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -522,7 +523,7 @@ class UltraQ:
                 self.output.append("\nCommunication Error\n")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         r = r.rstrip("\r\n")
         logger.info('got <' + str(r) + '>')
@@ -542,7 +543,7 @@ class UltraQ:
                 self.output.append("\nCommunication Error\n")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -576,7 +577,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -603,7 +604,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         self.output.append(r)
         logger.info('got <' + str(r) + '>')
@@ -649,7 +650,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -674,7 +675,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         if r is None:
             raise UltraQResponseError("None", "Bad response: None")
@@ -703,7 +704,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -735,7 +736,7 @@ class UltraQ:
                 raise UltraQResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
-            #logger.error("can't log in")
+            # logger.error("can't log in")
             raise e
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
@@ -747,6 +748,7 @@ class UltraQ:
 
 
 #     #### methods that essentially just call another method
+
 
     def get_nominal_gain(self):
         g = self.get_any_attn("NOMINALGAIN?\r")

@@ -23,6 +23,7 @@ class TextBox(tkst.ScrolledText):
     inherits from ScrolledText so we can add a context menu and some methods
     """
     # pylint: disable=too-many-ancestors
+
     def __init__(self, parent, **kwargs):
         self.parent = parent
         super().__init__(parent, **kwargs)
@@ -122,7 +123,7 @@ class TerminalWindow(tk.Toplevel):
         self.geometry("400x300")
         self.withdraw()
         self.parent = parent
-        self.output = output
+        # self.output = output  # is this ever used?
         self.title(const.PROGRAM_NAME + " terminal")
         self.iconbitmap(const.ICON_FILE)
         self.protocol('WM_DELETE_WINDOW', self.exit_handler)  # override the Windows "X" button
@@ -131,7 +132,7 @@ class TerminalWindow(tk.Toplevel):
 
         logger.info(" ")
         logger.info(self.class_name + " constructor")
-        tk.Grid.rowconfigure(self, 0, weight =1)
+        tk.Grid.rowconfigure(self, 0, weight=1)
         tk.Grid.columnconfigure(self, 0, weight=1)
 
         send_button_width = 8
@@ -139,7 +140,7 @@ class TerminalWindow(tk.Toplevel):
         sendbox_width = 25
 
         self.textbox = TextBox(self, wrap='none', state="normal", undo=1, width=30)
-        self.textbox.grid(row=0, column=0, columnspan = 3, sticky='n' + 's' + 'e' + 'w')
+        self.textbox.grid(row=0, column=0, columnspan=3, sticky='n' + 's' + 'e' + 'w')
 
         self.send_box = ttk.Combobox(self, textvariable=self._sendstring, values=self.send_list, width=sendbox_width)
         self.send_box.grid(row=1, column=0, padx='5', sticky=tk.W + tk.E + tk.NS)
@@ -168,7 +169,7 @@ class TerminalWindow(tk.Toplevel):
     def send_button_handler(self, event=None):
         if globe.dut is None:
             # logger.info("globe.dut is None, so call globe.open_dut()")
-            globe.open_dut([globe.serial_port_num], self.textbox, kind = globe.DUTKind.mock)
+            globe.open_dut([globe.serial_port_num], self.textbox, kind=globe.DUTKind.mock)
         if globe.dut is None:
             return
         if globe.dut.port.is_open():
@@ -187,6 +188,6 @@ class TerminalWindow(tk.Toplevel):
                 self.send_box['values'] = self.send_list
         return 'break'
 
-    def exit_handler(self,event=None):
+    def exit_handler(self, event=None):
         self.iconify()
 

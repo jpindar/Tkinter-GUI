@@ -30,7 +30,7 @@ def parse_url(c):
         s = s[7:]  # skip http:\\
     pos = s.find(":")  # the colon between ip address and port
     if pos >= 0:  # the order of these lines matters
-        c[1] = s[pos + 1 :]
+        c[1] = s[pos + 1:]
         c[0] = s[:pos]
     else:
         c[0] = s
@@ -106,7 +106,7 @@ class SocketDevice:
             logger.warning(e.args[0])
             logger.warning(e.__doc__)
 
-        logger.info("opening TCP socket " + str(connection[0]) + ":" + str(connection[1]) )
+        logger.info("opening TCP socket " + str(connection[0]) + ":" + str(connection[1]))
         # dt = socket.getdefaulttimeout()
         # logger.info("socket default timeout setting is " + str(dt))
         # socket.setdefaulttimeout()
@@ -119,7 +119,7 @@ class SocketDevice:
             # Typical error is:
             # [WinError 10060] TimeoutError A connection attempt failed because the connected party did not properly respond after a period of time,
             #  or established connection failed because connected host has failed to respond
-            #  This happens with a valid but non=existant url
+            #  This happens with a valid but non=existent url
             #
             logger.warning("connection attempt failed\r\n")
             logger.warning(e.__class__)  # TimeoutError  or #ConnectionRefusedError
@@ -148,7 +148,6 @@ class SocketDevice:
     def is_open(self):
         """
         This is really just checking if open_port() succeeded
-        :rtype: boolean
         """
         if not hasattr(self, "sock"):
             logger.warning("isOpen():port does not exist")
@@ -226,12 +225,11 @@ class SocketDevice:
     def read(self):
         """
         reads a response from the socket
-        :rtype: string
         """
         MAX_ATTEMPTS = 10
         done = False
         self.sock.setblocking(False)
-        r_bytes = "" # not None, because we want its len to be 0. can't take the len of None
+        r_bytes = ""  # not None, because we want its len to be 0. can't take the len of None
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
         if self.is_ready_to_read():
             pass

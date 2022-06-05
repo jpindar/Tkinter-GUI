@@ -9,8 +9,6 @@ import bbuq
 
 logger = logging.getLogger(__name__)
 
-
-
 # unsaved = False
 # user_interrupt = False
 user_pause = False
@@ -33,11 +31,14 @@ class DUTKind(Enum):
     serial = 1
     network = 2
 
+
 remote_port = '2101'  # default value, can be overridden
 remote_address = ''
 password = ''
-password_length = 16 # arbitrary, but same as firmware
+password_length = 16  # arbitrary, but same as firmware
 connection = None
+
+""" a dummy output object for times when we want to suppress output """
 
 
 class DevNull:
@@ -45,8 +46,9 @@ class DevNull:
     def __init__(self):
         pass
 
-    def append(self,s):
+    def append(self, s):
         pass
+
 
 dev_null = DevNull()
 
@@ -61,10 +63,10 @@ def close_dut():
 
 def parse_comport_name(c):
     if isinstance(c[0], str):
-        if c[0][:4]=='COM:':
+        if c[0][:4] == 'COM:':
             c[0] = int(c[0][4:])
         else:
-            if c[0][:3]=='COM':
+            if c[0][:3] == 'COM':
                 c[0] = int(c[0][3:])
     return int(c[0])
 
@@ -73,7 +75,7 @@ def parse_comport_name(c):
 def open_dut(connection, output, kind):
     """
     connection info is a list of either a com port number or an ip address and port
-    output is an object with an .append(string) method
+    output is an object with an .append(string) method, typically a textbox
     kind is a enum of DUTKind
     """
     global dut
@@ -82,9 +84,9 @@ def open_dut(connection, output, kind):
     assert isinstance(connection, list)
     if kind == DUTKind.serial or kind == DUTKind.mock:
         serial_port_num = parse_comport_name(connection)
-    dut = bbuq.UltraQ(connection, output, kind) # dumb constructor
+    dut = bbuq.UltraQ(connection, output, kind)  # dumb constructor
     try:
-        success =  dut.connect()
+        success = dut.connect()
     except (OSError, bbuq.UltraQError) as e:
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
@@ -96,7 +98,10 @@ def open_dut(connection, output, kind):
     # assert(isinstance(dut,bbuq.UltraQ))
     dut.set_output(output)
     if success:
-        output.append("\nConnected\r\n")
+        if kind == DUTKind.serial:
+            output.append("\nConnected\r\n")
+        if kind == DUTKind.mock:
+            output.append("\nConnected to a mock DUT\r\n")
         return True
     else:
         output.append("\nNot connected\n")
