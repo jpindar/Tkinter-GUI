@@ -5,7 +5,7 @@ File: globe.py
 __author__ = 'jpindar@jpindar.com'
 import logging
 from enum import Enum
-import bbuq
+import device
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ dut = None
 
 # port serial_port_num should default to 0 to make other routines
 # know it may not be valid
-# until we call open_dut, dut is not an Ultra-Q (or any type) so it
+# until we call open_dut, dut is not any type so it
 # doesn't have a place to store a serial_port_num
 serial_port_num = 0
 
@@ -84,10 +84,10 @@ def open_dut(connection, output, kind):
     assert isinstance(connection, list)
     if kind == DUTKind.serial or kind == DUTKind.mock:
         serial_port_num = parse_comport_name(connection)
-    dut = bbuq.UltraQ(connection, output, kind)  # dumb constructor
+    dut = device.Device(connection, output, kind)  # dumb constructor
     try:
         success = dut.connect()
-    except (OSError, bbuq.UltraQError) as e:
+    except (OSError, device.DeviceError) as e:
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
         return False
@@ -95,7 +95,7 @@ def open_dut(connection, output, kind):
         logger.error(e.__class__)
         logger.error("Can't connect to the dut\n")
         return False
-    # assert(isinstance(dut,bbuq.UltraQ))
+    # assert(isinstance(dut,device.Device))
     dut.set_output(output)
     if success:
         if kind == DUTKind.serial:

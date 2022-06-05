@@ -2,14 +2,14 @@
 
 ### What is this repository for? ###
 
-BBUQGUI is a desktop GUI provided for our customers to control their BBUQ (a variant of the Ultra-Q filter).
+This is a desktop GUI provided for our customers to control their BBUQ (a variant of the Ultra-Q filter).
 
-Copyright TelGaAS Inc. 2018
+
 
 ### What else do I need ###
 
-Python 3.4 (We're sticking with 3.4 since that's the last version that works with WinXP, and some customers still use XP.)  
-TKinter (This is already part of most Python installs.)  
+Python 3.4 (We're sticking with 3.4 since that's the last version that works with WinXP, and some customers still use XP.)
+TKinter (This is already part of most Python installs.)
 PySerial (https://pypi.python.org/pypi/pyserial)
 PyCrypt  (https://pypi.org/project/pycrypto/)
 
@@ -29,4 +29,4 @@ Rename the exe as desired
 
 written by jpindar@jpindar.com  aka jeannepindar@gmail.com
 
-copyright TelGaAs Inc.  http://telgaas.com/
+

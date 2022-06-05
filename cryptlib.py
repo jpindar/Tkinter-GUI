@@ -1,5 +1,5 @@
 """
-Project: BBUQ_GUI
+Project: device_GUI
 File: cryptlib.py
 Date: 3/29/2019
 https://stackoverflow.com/questions/2490334/simple-way-to-encode-a-string-according-to-a-password

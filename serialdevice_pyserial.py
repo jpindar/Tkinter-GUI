@@ -160,7 +160,7 @@ class SerialDevice:
         : rtype: string
         """
         r_bytes = None
-        # delay was 0.2 for old, slow BBUQ
+        # delay was 0.2 for old, slow device
         time.sleep(read_delay)  # read can fail if no delay here, 0.2 works
 
         try:

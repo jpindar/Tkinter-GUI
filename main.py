@@ -2,7 +2,7 @@
 # pylint: disable=protected-access,unused-argument,bad-continuation
 """
 a simple Python3.4 GUI using pySerial and tkinter
-Project: BBUQ GUI
+Project: DEVICE GUI
 File: main.py
 Date: 3/2019
 Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
@@ -27,15 +27,15 @@ import serialdevice_pyserial
 import terminalwindow
 import const
 import globe
-import bbuq
+import device
 
 
 ENABLE_LOGGING = True
-log_filename = 'Ultra-Q.log'
+log_filename = 'Device.log'
 __author__ = 'jpindar@jpindar.com'
-const.PROGRAM_NAME = " Ultra-Q "
-const.VERSION = "v1.09"
-const.BUILD = "1.09.0"
+const.PROGRAM_NAME = " Device Control "
+const.VERSION = "v1.10"
+const.BUILD = "1.10.0"
 globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
@@ -155,11 +155,11 @@ class MainWindow(tk.Frame):
         self.freq_frame = tk.Frame(self, height=2, width=3, relief=tk.GROOVE, borderwidth=4)
         self.freq_frame.grid(row=1, column=0, padx=(5, 2), pady=5, sticky=tk.N + tk.EW)
 
-        self.mid_frame = tk.Frame(self,relief=tk.FLAT,borderwidth=0)
+        self.mid_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0)
         self.mid_frame.grid(row=2, column=0, sticky=tk.NS + tk.EW)
 
         self.rowconfigure(9, weight=1)  # this row is a spacer
-        tk.Frame(self,relief=tk.FLAT,borderwidth=0).grid(row=9,column=0)
+        tk.Frame(self, relief=tk.FLAT, borderwidth=0).grid(row=9, column=0)
 
         self.bottom_bar = tk.Frame(self, height=40, borderwidth=5, relief='ridge')
         self.bottom_bar.grid(row=10, column=0, columnspan='2', sticky=tk.N + tk.S + tk.E + tk.W)
@@ -196,7 +196,8 @@ class MainWindow(tk.Frame):
                                          variable=self.save_password_b, command=self.save_password_handler)
         if ENABLE_LOGGING:
             self.logging_b = True
-            self.option_menu.add_checkbutton(label="write log file", onvalue=1, offvalue=0, variable=self.logging_b, command=self.logging_handler)
+            self.option_menu.add_checkbutton(label="write log file", onvalue=1, offvalue=0, variable=self.logging_b,
+                                             command=self.logging_handler)
 
         self.option_menu.entryconfig(0, state=tk.DISABLED)
         self.option_menu.entryconfig(1, state=tk.DISABLED)
@@ -386,10 +387,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_attn(a)
             # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         except ValueError as e:
@@ -410,10 +411,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_attn(a)
             # can't just query the gain because there was 1 unit w/o a gain query
             g = globe.dut.nominal_gain - globe.dut.get_attn()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         except ValueError as e:
@@ -434,10 +435,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_bypass(b)
             r = globe.dut.get_bypass()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self.bypass_i.set(r)
@@ -456,10 +457,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_overpower_bypass_enable(b)
             r = globe.dut.get_overpower_bypass_enable()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self.overpower_bypass_b.set(r)
@@ -492,10 +493,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_eeprom_write_mode(b)
             r = globe.dut.get_eeprom_write_mode()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self.write_b.set(r)
@@ -541,12 +542,12 @@ class MainWindow(tk.Frame):
         try:
             if globe.dut is not None:
                 globe.dut.set_baud(b)
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
         except Exception as e:
             logger.info(e.__class__)
-        # except bbuq.UltraQLoggedOutError as e:
+        # except device.DeviceLoggedOutError as e:
         #    self.status1("Not Connected to Device", bg = 'SystemButtonFace')
         #    return
         # self.fast_baud_b.set(b)
@@ -564,10 +565,10 @@ class MainWindow(tk.Frame):
             globe.dut.set_uf_mode(b)
             r = globe.dut.get_uf_mode()
             n = globe.dut.get_ultrafine()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
 
@@ -593,10 +594,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_ultrafine(s)
             f = globe.dut.get_ultrafine()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self._uf_s.set(str(f))
@@ -612,10 +613,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_ultrafine(f)
             f = globe.dut.get_ultrafine()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self._uf_s.set(str(f))
@@ -632,10 +633,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_freq(f)
             f2 = globe.dut.get_freq()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         else:
@@ -655,10 +656,10 @@ class MainWindow(tk.Frame):
         try:
             globe.dut.set_freq(f)
             f = globe.dut.get_freq()
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         self._freq_s.set("{:.6f}".format(f))
@@ -736,7 +737,7 @@ class MainWindow(tk.Frame):
         globe.password = self.top_bar3.password_str.get()
         try:
             success = globe.dut.login()  # even for a unit that doesn't need it, this tests the ID
-        except Exception as e:  # UltraQError
+        except Exception as e:  # DeviceError
             logger.error(e.__class__)
             logger.error("Can't log in\n")
             app.terminal_window.textbox.append("Couldn't log in\n")
@@ -787,15 +788,15 @@ class MainWindow(tk.Frame):
             self._ufmode_i.set(uf_mode)
             uf_setting = globe.dut.get_ultrafine()
             self._uf_s.set(str(uf_setting))
-        except bbuq.UltraQResponseError as e:
+        except device.DeviceResponseError as e:
             logger.error(e.__class__)
             self.status1("Bad or no response from device", bg='red')
             return
-        except bbuq.UltraQLoggedOutError as e:
+        except device.DeviceLoggedOutError as e:
             logger.error(e.__class__)
             self.status1("Not Connected to Device", bg='red')
             return
-        except bbuq.UltraQTimeoutError as e:
+        except device.DeviceTimeoutError as e:
             logger.error(e.__class__)
             self.status1("No response from device", bg='red')
             return
@@ -809,10 +810,10 @@ class MainWindow(tk.Frame):
                 if globe.dut.port.is_open():
                     try:
                         op = globe.dut.get_overpower_status()
-                    except bbuq.UltraQResponseError as e:
+                    except device.DeviceResponseError as e:
                         self.status1("Bad or no response from device", bg='red')
                         return
-                    except bbuq.UltraQLoggedOutError as e:
+                    except device.DeviceLoggedOutError as e:
                         self.status1("Not Connected to Device", bg='red')
                         return
                     if op:
@@ -954,15 +955,15 @@ def user_interrupt_handler(event=None):
 
 def display_about_messagebox(event=None):
     about_string = const.PROGRAM_NAME + " " + const.VERSION + "\n"
-    about_string += "TelGaAs Inc.\n" + " telgaas.com \n\n"
+    about_string += "Acme Inc.\n" + " jpindar.com \n\n"
     about_string += __author__ + "\n"
     tmb.showinfo("About " + const.PROGRAM_NAME, about_string, icon=tmb.INFO)
     return 'break'
 
 
 def display_help_messagebox(event=None):
-    help_string = "Contact TelGaAs Inc. at telgaas.com for help\n\n"
-    help_string += "USB drivers for Ultra-Q filters are available at \n"
+    help_string = "Contact Acme Inc. at jpindar.com for help\n\n"
+    help_string += "USB drivers are available at \n"
     help_string += "http://www.ftdichip.com/Drivers/VCP.htm\n\n"
     help_string += "This program operates at 19200 baud except when the 115200 baud option is selected.\n\n"
     # help_string += user_path(password_file)
@@ -1003,9 +1004,9 @@ def user_path(relative_path):
     # my_home = expanduser("~") # works in IDE, works on XOTIC, but points to SPB_Data .exe on VAIO
     # my_home = os.getenv('USERPROFILE') # this works! (so far...)
     my_home = os.path.expanduser(os.getenv('USERPROFILE'))  # this works! (so far...)
-    p = os.path.join(my_home, "bbuq", relative_path)
+    p = os.path.join(my_home, "device", relative_path)
     # p = 'C:\\foo.txt'  nope
-    # p = 'C:\\Users\\jpindar\\BBUQ\\_SOFTWARE\\settings.txt' Yep
+    # p = 'C:\\Users\\jpindar\\device\\_SOFTWARE\\settings.txt' Yep
     # p = 'C:\\Users\\jpindar\\baz\\settings.txt' only if baz already exists
     return p
 
@@ -1025,7 +1026,7 @@ def set_root_size():
 
 # do these before the GUI starts!
 const.ICON_FILE = resource_path('company_logo.ico')
-const.HEADER_IMAGE = resource_path('banner250x50.gif')
+const.HEADER_IMAGE = resource_path('banner250x50.png')
 
 root = tk.Tk()
 style = ttk.Style()

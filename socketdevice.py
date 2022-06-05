@@ -117,7 +117,8 @@ class SocketDevice:
             self.sock.connect((connection[0], int(connection[1])))
         except OSError as e:
             # Typical error is:
-            # [WinError 10060] TimeoutError A connection attempt failed because the connected party did not properly respond after a period of time,
+            # [WinError 10060] TimeoutError A connection attempt failed because the connected party did not
+            # properly respond after a period of time,
             #  or established connection failed because connected host has failed to respond
             #  This happens with a valid but non=existent url
             #

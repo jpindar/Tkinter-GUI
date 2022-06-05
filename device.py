@@ -1,6 +1,6 @@
 # pylint: disable=unused-argument
 """
-File: bbuq.py
+File: device.py
 
 Version: 1.03
 Author: jpindar@jpindar.com
@@ -20,7 +20,7 @@ __author__ = 'jpindar@jpindar.com'
 logger = logging.getLogger(__name__)
 
 
-class UltraQError(Exception):
+class DeviceError(Exception):
     """Raise for my specific kind of exception"""
 
     def __init___(self, name, response):
@@ -29,21 +29,21 @@ class UltraQError(Exception):
         self.response = response
 
 
-class UltraQLoggedOutError(UltraQError):
+class DeviceLoggedOutError(DeviceError):
     """Raise for my specific kind of exception"""
 
     def __init___(self, name, response):
         super().__init__()
 
 
-class UltraQTimeoutError(UltraQError):
+class DeviceTimeoutError(DeviceError):
     """Raise for my specific kind of exception"""
 
     def __init___(self, name, response):
         super().__init__()
 
 
-class UltraQResponseError(UltraQError):
+class DeviceResponseError(DeviceError):
     """Raise for my specific kind of exception"""
 
     def __init___(self, name, response):
@@ -65,7 +65,7 @@ def is_correct_id(s):
     if s is None:
         return False
     s2 = s.upper()
-    return bool(s2[:7] == "ULTRA-Q")
+    return bool(s2[:7] == "Fluke")
 
 
 def is_password_prompt(s):
@@ -76,23 +76,23 @@ def is_password_prompt(s):
     return False
 
 
-class UltraQ:
+class Device:
     """
-       represents a BBUQ type Ultra-Q, regardless of connection type
+        represents a device regardless of connection type
     """
     # pylint: disable=too-many-public-methods, too-many-instance-attributes
     PASSWORD_LENGTH = 16
 
     def __init__(self, connection, output, kind):
         """
-        constructor for an Ultra-Q device
+        constructor for a Device
         connection is a list containing either a serial port number
         or an ip address and a port
         output is anything with an .append(string) method, typically a textbox
         kind is an enum representing the type of connection:
         serial, network or mock
 
-        So bbuq is either a serialdevice_pyserial.SerialDevice()
+        So device is either a serialdevice_pyserial.SerialDevice()
         or a socketdevice.SocketDevice()
         or a mock
 
@@ -154,7 +154,7 @@ class UltraQ:
         return True
 
     def login(self):
-        globe.password = globe.password[:UltraQ.PASSWORD_LENGTH]
+        globe.password = globe.password[:Device.PASSWORD_LENGTH]
         s = None
         logger.info("attempting to log in\r")
         attempts = 0
@@ -162,7 +162,7 @@ class UltraQ:
             attempts += 1
             try:
                 self.port.write('ID?\r')
-                s = self.port.read()  # response should be "Ultra-Q" if we are logged in
+                s = self.port.read()
             except OSError as e:
                 logger.error(e.__class__)
                 break
@@ -277,9 +277,9 @@ class UltraQ:
         logger.info('get_id: got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_revision(self):
@@ -303,9 +303,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         r2 = r.strip(" revisionREVISION\r\n")
         # now r2 should be something like "2.01"
         return r2
@@ -329,14 +329,14 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         r2 = r.strip(string.ascii_letters + ' \r\n')
         try:
             f = float(r2)
         except ValueError:
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return f
 
     def set_any_attn(self, msg):
@@ -358,9 +358,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_any_boolean(self, msg):
@@ -382,13 +382,13 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         try:
             r2 = int(r)
         except ValueError:
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return r2
 
     def set_any_boolean(self, msg, data):
@@ -414,9 +414,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_any_detector(self, msg):
@@ -438,9 +438,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(str(r))
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         n = 0
         r = r.strip(string.ascii_letters + '= \r\n')
         try:
@@ -449,7 +449,7 @@ class UltraQ:
             # r = r // 64
             # r = r * 64
         except (ValueError, AttributeError):
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         logger.info('returning <' + str(n) + '>')
         return n
 
@@ -472,16 +472,16 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         r = r.strip(string.ascii_letters + ' \r\n')
         if r is None:   # TypeError would catch this
-            raise UltraQResponseError("None", "Bad response: only whitespace or terminations")
+            raise DeviceResponseError("None", "Bad response: only whitespace or terminations")
         try:
             f = float(r)
         except (ValueError, AttributeError, TypeError) as e:
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return f
 
     def set_any_freq(self, msg) -> str:
@@ -504,9 +504,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_any_string(self, msg):
@@ -548,16 +548,16 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         r = r.strip(" clicks\r\n")
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         try:
             r2 = int(r)
         except (ValueError, AttributeError):
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return r2
 
     def set_any_ultrafine(self, msg):
@@ -571,10 +571,10 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
@@ -582,9 +582,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_chan_spacing(self):
@@ -598,10 +598,10 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
@@ -609,16 +609,16 @@ class UltraQ:
         self.output.append(r)
         logger.info('got <' + str(r) + '>')
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", "foo")
+            raise DeviceLoggedOutError("LoggedOut", "foo")
         r2 = r.strip(string.ascii_letters + ' \r\n')
         if r2 is None:
-            raise UltraQResponseError("None", "Bad response: '" + r + "' (None)")
+            raise DeviceResponseError("None", "Bad response: '" + r + "' (None)")
         try:
             f = float(r2)
         except ValueError:
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return f
 
     # def set_chan_spacing(self, data):
@@ -630,7 +630,7 @@ class UltraQ:
     #     logger.info('got <' + str(r) + '>')
     #     self.output.append(r)
     #     if 'password' in r:
-    #         raise UltraQLoggedOutError("LoggedOut",r)
+    #         raise DeviceLoggedOutError("LoggedOut",r)
     #     return r
 
     def get_max_step(self):
@@ -644,10 +644,10 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
@@ -655,9 +655,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQError("None", "Bad response: None")
+            raise DeviceError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
     def get_overpower_status(self):
@@ -669,22 +669,22 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
             raise e
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         try:
             r2 = int(r)
         except (ValueError, AttributeError):
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return r2
 
     def get_step(self):
@@ -698,10 +698,10 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
@@ -709,13 +709,13 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", "foo")
+            raise DeviceLoggedOutError("LoggedOut", "foo")
         try:
             r2 = int(r)
         except (ValueError, AttributeError):
-            raise UltraQResponseError("ValueError", "Bad response: '" + r + "'")
+            raise DeviceResponseError("ValueError", "Bad response: '" + r + "'")
         return r2
 
     def set_step(self, step):
@@ -730,10 +730,10 @@ class UltraQ:
         except OSError as e:
             if e == TimeoutError:
                 self.output.append("\nTimeout Error")
-                raise UltraQTimeoutError("none", "unknown")
+                raise DeviceTimeoutError("none", "unknown")
             else:
                 self.output.append("\nCommunication Error\n")
-                raise UltraQResponseError("none", "unknown")
+                raise DeviceResponseError("none", "unknown")
         except Exception as e:    # more specific exceptions should be already caught
             logger.error(e.__class__)
             # logger.error("can't log in")
@@ -741,9 +741,9 @@ class UltraQ:
         logger.info('got <' + str(r) + '>')
         self.output.append(r)
         if r is None:
-            raise UltraQResponseError("None", "Bad response: None")
+            raise DeviceResponseError("None", "Bad response: None")
         if 'password' in r:
-            raise UltraQLoggedOutError("LoggedOut", r)
+            raise DeviceLoggedOutError("LoggedOut", r)
         return r
 
 
@@ -810,7 +810,7 @@ class UltraQ:
                 r = self.get_any_boolean("OVERPOWERBYPASS?\r")
             else:
                 r = self.get_any_boolean("OVERPOWERBYPASSENABLE?\r")
-        except UltraQError as e:
+        except DeviceError as e:
             logger.error(e.__class__)
             return False
         if r is None:
@@ -825,7 +825,7 @@ class UltraQ:
                 self.set_any_boolean("OVERPOWERBYPASS", b)
             else:
                 self.set_any_boolean("OVERPOWERBYPASSENABLE", b)
-        except UltraQError as e:
+        except DeviceError as e:
             logger.error(e.__class__)
 
     def get_eeprom_write_mode(self):
