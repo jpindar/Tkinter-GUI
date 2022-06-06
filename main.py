@@ -378,6 +378,8 @@ class MainWindow(tk.Frame):
         # g = globe.dut.get_gain()
         # because there was one unit without gain commands
         # logger.info(inspect.stack()[0][3])
+        if globe.dut is None:  # never happens, but this makes the linter happy
+            return
         s = None
         try:
             s = self._gain_s.get()
@@ -402,6 +404,8 @@ class MainWindow(tk.Frame):
         self._gain_s.set(s)
 
     def gain_button_handler(self, increment, event=None) -> None:
+        if globe.dut is None:  # never happens, but this makes the linter happy
+            return
         try:
             g = float(self._gain_s.get())
             g += (increment * globe.dut.attn_step_size)
@@ -425,6 +429,8 @@ class MainWindow(tk.Frame):
         self._gain_s.set('{0:5.2f}'.format(g))
 
     def bypass_handler(self, event=None) -> None:
+        if globe.dut is None:  # never happens, but this makes the linter happy
+            return
         s = None
         try:
             s = self.bypass_i.get()
@@ -445,6 +451,8 @@ class MainWindow(tk.Frame):
         self.bypass_i.set(r)
 
     def overpower_handler(self, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         s = None
         try:
             s = self.overpower_bypass_b.get()
@@ -480,6 +488,8 @@ class MainWindow(tk.Frame):
         why is this even here? If someone needs this, they should set it in their code,
         not from the GUI
         """
+        if globe.dut is None:  # never happens
+            return
         try:
             s = self.write_b.get()
         except ValueError as e:
@@ -554,6 +564,8 @@ class MainWindow(tk.Frame):
         # self.fast_baud_b.set(b)
 
     def ufmode_handler(self, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         s = None
         try:
             s = self._ufmode_i.get()
@@ -585,6 +597,8 @@ class MainWindow(tk.Frame):
             self._uf_s.set(str(n))
 
     def uf_box_handler(self, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         try:
             s = self._uf_s.get()
         except ValueError as e:
@@ -604,6 +618,8 @@ class MainWindow(tk.Frame):
         self._uf_s.set(str(f))
 
     def uf_button_handler(self, increment, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         try:
             f = int(self._uf_s.get())
         except ValueError as e:
@@ -623,6 +639,8 @@ class MainWindow(tk.Frame):
         self._uf_s.set(str(f))
 
     def freq_button_handler(self, increment, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         try:
             f = float(self._freq_s.get())
         except ValueError as e:
@@ -645,6 +663,8 @@ class MainWindow(tk.Frame):
 
 
     def freq_box_handler(self, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         s = None
         f = 0.0
         try:
@@ -733,6 +753,8 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler3(self, event=None) -> None:
+        if globe.dut is None:  # never happens
+            return
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler2
         success = None
         globe.password = self.top_bar3.password_str.get()
@@ -769,6 +791,8 @@ class MainWindow(tk.Frame):
 
 
     def refresh_gui(self) -> None:
+        if globe.dut is None:  # never happens
+            return
         uf_mode = None  # This is the only variable here because its the only one used after the try
         try:
             start_freq = globe.dut.get_start_freq()
@@ -808,19 +832,19 @@ class MainWindow(tk.Frame):
     def poll_for_overpower_bypass(self) -> None:
         if self.overpower_bypass_b.get():
             if globe.dut is not None:
-                    if globe.dut.port.is_open():
-                        try:
-                            op = globe.dut.get_overpower_status()
-                        except device.DeviceResponseError as e:
-                            self.status1("Bad or no response from device", bg='red')
-                            return
-                        except device.DeviceLoggedOutError as e:
-                            self.status1("Not Connected to Device", bg='red')
-                            return
-                        if op:
-                            self.status_bar3.config(text="OVER POWER BYPASS", bg='red')
-                        else:
-                            self.status_bar3.config(text="", bg='SystemButtonFace')
+                if globe.dut.port.is_open():
+                    try:
+                        op = globe.dut.get_overpower_status()
+                    except device.DeviceResponseError as e:
+                        self.status1("Bad or no response from device", bg='red')
+                        return
+                    except device.DeviceLoggedOutError as e:
+                        self.status1("Not Connected to Device", bg='red')
+                        return
+                    if op:
+                        self.status_bar3.config(text="OVER POWER BYPASS", bg='red')
+                    else:
+                        self.status_bar3.config(text="", bg='SystemButtonFace')
         else:
             self.status_bar3.config(text="", bg='SystemButtonFace')
         self.after(poll_timing, self.poll_for_overpower_bypass)
