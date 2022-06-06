@@ -8,60 +8,63 @@ https://pypi.org/project/pycrypto/
 https://paste.ubuntu.com/11024555/
 PyCrypto is public domain
 """
+# TODO  unit tests
 
 import struct
+from typing import Union
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from Crypto.Cipher import AES
 
 
-def pad16(s):
+def pad16(s: Union[str, bytes]) -> bytes:
     if isinstance(s, str):
         s = s.encode()
-    n = struct.pack('>I', len(s))  # save the length
-    r = n + s                      # append it
-    pad = '\x00' * ((16 - len(r) % 16) % 16)  # pad with zeros
+    r: bytes = struct.pack('>I', len(s))  # save the length
+    r = r + s                      # append it
+    pad: str = '\x00' * ((16 - len(r) % 16) % 16)  # pad with zeros
     r = r + pad.encode()
     return r  # and r is now a multiple of 16 chars long
 
 
-def unpad16(s):
+def unpad16(s: bytes) -> bytes:
     n = struct.unpack('>I', s[:4])[0]
-    return s[4:n + 4]  # and r is now it's original length
-
-
-class Crypt(object):
-    def __init__(self, password):
-        password = pad16(password)
-        self.cipher = AES.new(password, AES.MODE_ECB)
-
-    def encrypt(self, s):
-        s = pad16(s)
-        return self.cipher.encrypt(s)
-
-    def decrypt(self, s):
-        t = self.cipher.decrypt(s)
-        return unpad16(t)
-
-
-def encrypt(s, p):
-    c = Crypt(p)
-    b = c.encrypt(s)
-    r = urlsafe_b64encode(b).decode()
+    r: bytes = s[4:n + 4]
     return r
 
 
-def decrypt(s, p):
+class Crypt(object):
+    def __init__(self, password: str):
+        self.cipher = AES.new(pad16(password), AES.MODE_ECB)
+
+    def encrypt(self, s: str) -> bytes:
+        b: bytes = pad16(s)
+        return self.cipher.encrypt(b)
+
+    def decrypt(self, s) -> bytes:
+        t: bytes = self.cipher.decrypt(s)
+        r: bytes = unpad16(t)
+        return r
+
+
+def encrypt(s: str, p: str) -> str:
     c = Crypt(p)
-    s2 = urlsafe_b64decode(s)
-    r = c.decrypt(s2).decode()
+    b: bytes = c.encrypt(s)
+    r: str = urlsafe_b64encode(b).decode()
+    return r
+
+
+def decrypt(s: str, p: str) -> str:
+    c = Crypt(p)
+    s2: bytes = urlsafe_b64decode(s)
+    r: str = c.decrypt(s2).decode()
     return r
 
 
 if __name__ == '__main__':
-    p = 'password'
-    t = 'my message'
-    x = encrypt(t, p)
-    y = decrypt(x, p)
+    p: str = 'password'
+    t: str = 'my message'
+    x: str = encrypt(t, p)
+    y: str = decrypt(x, p)
     print([x, y])
 
 
