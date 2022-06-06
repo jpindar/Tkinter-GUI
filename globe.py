@@ -36,13 +36,15 @@ remote_port = '2101'  # default value, can be overridden
 remote_address = ''
 password = ''
 password_length = 16  # arbitrary, but same as firmware
-connection = None
-
-""" a dummy output object for times when we want to suppress output """
+connection = ['', '']
+user_interrupt = False
+unsaved = False
 
 
 class DevNull:
+    """ a dummy output object for times when we want to suppress output """
     # pylint: disable=too-few-public-methods
+
     def __init__(self):
         pass
 

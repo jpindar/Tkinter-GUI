@@ -14,6 +14,7 @@ Author: jeannepindar@gmail.com  aka jpindar@jpindar.com
 import inspect
 import logging
 from time import time
+from typing import List, Dict, Optional, Any, Union
 import json
 import os
 import tkinter as tk
@@ -62,7 +63,7 @@ class MainWindow(tk.Frame):
     major_freq_increment = 1
     minor_freq_increment = 0.0025  # TODO read this from channel spacing
 
-
+    """  TopBar1 contains the address dropdown, a connect button, and the logo """
     class TopBar1(tk.Frame):
         def __init__(self, parent, gparent, **kw):
             super().__init__(parent, **kw)
@@ -79,17 +80,17 @@ class MainWindow(tk.Frame):
             self.button_connect.bind('<Return>', gparent.connect_button_handler)
 
 
-        def comport_handler(self, event=None):
+        def comport_handler(self, event=None) -> None:
             try:
                 s = self.comport_str.get()
-                if s[:3] == 'COM':
+                if s[:3] == 'COM':  # TODO make this cross platform
                     globe.serial_port_num = int(s[3:])
             except ValueError:  # if there is no comport number there, give up
                 pass
 
-        def populate_comport_menu(self):
+        def populate_comport_menu(self) -> bool:
             possible_ports = serialdevice_pyserial.get_ports()
-            if possible_ports[0] != '':
+            if possible_ports[0] != '':  # TODO make this cross platform
                 possible_ports = ["COM" + str(p) for p in possible_ports]
                 possible_ports.append('network')
             else:
@@ -366,7 +367,7 @@ class MainWindow(tk.Frame):
     # a menu. It's easiest just to put the optional parameter on all of them.
 
 
-    def gain_handler(self, event=None):
+    def gain_handler(self, event=None) -> None:
         """
           atten is max gain - desired gain
         """
@@ -400,7 +401,7 @@ class MainWindow(tk.Frame):
         s = '{0:5.2f}'.format(g)
         self._gain_s.set(s)
 
-    def gain_button_handler(self, increment, event=None):
+    def gain_button_handler(self, increment, event=None) -> None:
         try:
             g = float(self._gain_s.get())
             g += (increment * globe.dut.attn_step_size)
@@ -423,7 +424,7 @@ class MainWindow(tk.Frame):
             return
         self._gain_s.set('{0:5.2f}'.format(g))
 
-    def bypass_handler(self, event=None):
+    def bypass_handler(self, event=None) -> None:
         s = None
         try:
             s = self.bypass_i.get()
@@ -443,7 +444,7 @@ class MainWindow(tk.Frame):
             return
         self.bypass_i.set(r)
 
-    def overpower_handler(self, event=None):
+    def overpower_handler(self, event=None) -> None:
         s = None
         try:
             s = self.overpower_bypass_b.get()
@@ -466,7 +467,7 @@ class MainWindow(tk.Frame):
         self.overpower_bypass_b.set(r)
 
 
-    def logging_handler(self, event=None):
+    def logging_handler(self, event=None) -> None:
         b = self.logging_b.get()
         if b:
             logging.disable(logging.NOTSET)  # enables logging
@@ -474,7 +475,7 @@ class MainWindow(tk.Frame):
             logging.disable(999)  # disables logging
 
 
-    def write_handler(self, event=None):
+    def write_handler(self, event=None) -> None:
         """
         why is this even here? If someone needs this, they should set it in their code,
         not from the GUI
@@ -501,7 +502,7 @@ class MainWindow(tk.Frame):
             return
         self.write_b.set(r)
 
-    def save_password_handler(self, event=None):
+    def save_password_handler(self, event=None) -> None:
         try:
             s = self.save_password_b.get()
         except ValueError as e:
@@ -520,7 +521,7 @@ class MainWindow(tk.Frame):
             delete_password_file()
 
 
-    def fast_baud_handler(self, event=None):
+    def fast_baud_handler(self, event=None) -> None:
         """
         this is awkward
         """
@@ -552,7 +553,7 @@ class MainWindow(tk.Frame):
         #    return
         # self.fast_baud_b.set(b)
 
-    def ufmode_handler(self, event=None):
+    def ufmode_handler(self, event=None) -> None:
         s = None
         try:
             s = self._ufmode_i.get()
@@ -583,7 +584,7 @@ class MainWindow(tk.Frame):
             self.uf_rightButton.config(state=tk.NORMAL)
             self._uf_s.set(str(n))
 
-    def uf_box_handler(self, event=None):
+    def uf_box_handler(self, event=None) -> None:
         try:
             s = self._uf_s.get()
         except ValueError as e:
@@ -602,7 +603,7 @@ class MainWindow(tk.Frame):
             return
         self._uf_s.set(str(f))
 
-    def uf_button_handler(self, increment, event=None):
+    def uf_button_handler(self, increment, event=None) -> None:
         try:
             f = int(self._uf_s.get())
         except ValueError as e:
@@ -621,7 +622,7 @@ class MainWindow(tk.Frame):
             return
         self._uf_s.set(str(f))
 
-    def freq_button_handler(self, increment, event=None):
+    def freq_button_handler(self, increment, event=None) -> None:
         try:
             f = float(self._freq_s.get())
         except ValueError as e:
@@ -643,7 +644,7 @@ class MainWindow(tk.Frame):
             self._freq_s.set("{:.6f}".format(f2))
 
 
-    def freq_box_handler(self, event=None):
+    def freq_box_handler(self, event=None) -> None:
         s = None
         f = 0.0
         try:
@@ -665,7 +666,7 @@ class MainWindow(tk.Frame):
         self._freq_s.set("{:.6f}".format(f))
 
 
-    def connect_button_handler(self, event=None):
+    def connect_button_handler(self, event=None) -> None:
         success = None
         self.status1(" ", bg='SystemButtonFace')
         self.enable_widgets(False)
@@ -705,7 +706,7 @@ class MainWindow(tk.Frame):
         # self.listen_for_overpower_bypass()
 
 
-    def connect_button_handler2(self, event=None):
+    def connect_button_handler2(self, event=None) -> None:
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler3
         globe.remote_address = self.top_bar2.remote_address_str.get()
         success = None
@@ -731,7 +732,7 @@ class MainWindow(tk.Frame):
             return   # go wait for user to enter password and click again
 
 
-    def connect_button_handler3(self, event=None):
+    def connect_button_handler3(self, event=None) -> None:
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler2
         success = None
         globe.password = self.top_bar3.password_str.get()
@@ -767,7 +768,7 @@ class MainWindow(tk.Frame):
         # self.listen_for_overpower_bypass()
 
 
-    def refresh_gui(self):
+    def refresh_gui(self) -> None:
         uf_mode = None  # This is the only variable here because its the only one used after the try
         try:
             start_freq = globe.dut.get_start_freq()
@@ -804,22 +805,22 @@ class MainWindow(tk.Frame):
         # self.poll_for_overpower_bypass()
 
 
-    def poll_for_overpower_bypass(self):
+    def poll_for_overpower_bypass(self) -> None:
         if self.overpower_bypass_b.get():
             if globe.dut is not None:
-                if globe.dut.port.is_open():
-                    try:
-                        op = globe.dut.get_overpower_status()
-                    except device.DeviceResponseError as e:
-                        self.status1("Bad or no response from device", bg='red')
-                        return
-                    except device.DeviceLoggedOutError as e:
-                        self.status1("Not Connected to Device", bg='red')
-                        return
-                    if op:
-                        self.status_bar3.config(text="OVER POWER BYPASS", bg='red')
-                    else:
-                        self.status_bar3.config(text="", bg='SystemButtonFace')
+                    if globe.dut.port.is_open():
+                        try:
+                            op = globe.dut.get_overpower_status()
+                        except device.DeviceResponseError as e:
+                            self.status1("Bad or no response from device", bg='red')
+                            return
+                        except device.DeviceLoggedOutError as e:
+                            self.status1("Not Connected to Device", bg='red')
+                            return
+                        if op:
+                            self.status_bar3.config(text="OVER POWER BYPASS", bg='red')
+                        else:
+                            self.status_bar3.config(text="", bg='SystemButtonFace')
         else:
             self.status_bar3.config(text="", bg='SystemButtonFace')
         self.after(poll_timing, self.poll_for_overpower_bypass)
@@ -851,7 +852,8 @@ def encode(data, key):
     if data == '':
         data = ' '
     try:
-        return cryptlib.encrypt(data, key)
+        s: str = cryptlib.encrypt(data, key)
+        return s
     except Exception as e:
         return ''
 
@@ -1042,7 +1044,7 @@ bold_style.configure("bold.TButton", font='bold')
 #  or bold_style.configure("bold.TButton", font = ('Sans','10','bold'))
 
 app = MainWindow(root)
-app.pack(fill='both', expand='True')
+app.pack(fill='both', expand=1)
 set_root_size()
 root.title(const.PROGRAM_NAME + " " + str(const.VERSION))
 root.iconbitmap(const.ICON_FILE)
