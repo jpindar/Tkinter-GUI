@@ -157,7 +157,7 @@ class MainWindow(tk.Frame):
         self.freq_frame.grid(row=1, column=0, padx=(5, 2), pady=2, sticky=tk.N + tk.EW)
 
         self.mid_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#0000FF')
-        self.mid_frame.grid(row=2, column=0,padx=(5, 2), sticky=tk.NS + tk.EW)
+        self.mid_frame.grid(row=2, column=0, padx=(5, 2), sticky=tk.NS + tk.EW)
 
         self.rowconfigure(9, weight=1)  # this row is a spacer
         tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#FF00FF').grid(row=9, column=0)
@@ -232,34 +232,19 @@ class MainWindow(tk.Frame):
 
 
     def __fill_mid_frame(self):
-        # self.uf_frame = tk.Frame(self.mid_frame, height=5, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
-        # self.uf_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.uf_frame = tk.Frame(self.mid_frame, height=5, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
+        self.uf_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
-        self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
+        self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
         self.gain_frame.grid(row=1, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self.bypass_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
         self.bypass_frame.grid(row=2, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
-
-
         self.bypass_i = tk.IntVar()
         self.bypass_chk = tk.Checkbutton(self.bypass_frame, text="manual bypass", variable=self.bypass_i, command=self.bypass_handler)
         self.bypass_chk.grid(row=0, column=0, sticky=tk.W)
         self.bypass_chk.config(state=tk.DISABLED)
-
-        self._gain_s = tk.StringVar()
-        self.gain_label = tk.Label(self.gain_frame, text="gain", width=7, anchor=tk.E)
-        self.gain_label.grid(row=0, column=0, sticky=tk.W)
-        self.gain_label.config(state=tk.DISABLED)
-        self.gain_leftButton = tk.Button(self.gain_frame, text='<', command=lambda: self.gain_button_handler(-1))
-        self.gain_leftButton.grid(row=0, column=1, padx=3)
-        self.gain_box = tk.Entry(self.gain_frame, textvariable=self._gain_s, width=6, font="-weight bold")
-        self.gain_box.grid(row=0, column=2, pady=5, padx=5, sticky=tk.W)
-        self.gain_box.bind('<Return>', self.gain_handler)
-        self.gain_box.config(state=tk.DISABLED)
-        self.gain_rightButton = tk.Button(self.gain_frame, text='>', command=lambda: self.gain_button_handler(1))
-        self.gain_rightButton.grid(row=0, column=3, padx=3, sticky='e')
 
 
     def __fill_bottom_bar(self):
@@ -275,7 +260,7 @@ class MainWindow(tk.Frame):
         self.status_bar1.config(text=msg, **kwargs)
         self.update()
 
-    def enable_widgets(self, on_off, uf_mode=True):
+    def enable_widgets(self, on_off):
         if on_off:
             new_state = tk.NORMAL
         else:
@@ -285,79 +270,12 @@ class MainWindow(tk.Frame):
         self.option_menu.entryconfig(2, state=tk.NORMAL)  # always enabled
 
         self.bypass_chk.config(state=new_state)
-        self.gain_label.config(state=new_state)
-        self.gain_box.config(state=new_state)
-        self.gain_leftButton.config(state=new_state)
-        self.gain_rightButton.config(state=new_state)
 
 
     # These functions have an optional 'event' parameter because button binding passes an
     # event object to the callback function, but the menu doesn't.
     # So you need it if the function is invoked by a button press, but not if it is from
     # a menu. It's easiest just to put the optional parameter on all of them.
-
-
-    def gain_handler(self, event=None) -> None:
-        """
-          atten is max gain - desired gain
-        """
-        # can't just do this:
-        # g = float(s)
-        # logger.info("setting the gain to " + str(g))
-        # globe.dut.set_gain(g)  #no, firmware rev <2.01 don't have this
-        # g = globe.dut.get_gain()
-        # because there was one unit without gain commands
-        # logger.info(inspect.stack()[0][3])
-        if globe.dut is None:  # never happens, but this makes the linter happy
-            return
-        s = None
-        try:
-            s = self._gain_s.get()
-            a = globe.dut.nominal_gain - float(s)
-            if a < 0:
-                a = 0
-            logger.info("setting the attn to " + str(a))
-            globe.dut.set_attn(a)
-            # can't just query the gain because there was 1 unit w/o a gain query
-            g = globe.dut.nominal_gain - globe.dut.get_attn()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-            return
-        s = '{0:5.2f}'.format(g)
-        self._gain_s.set(s)
-
-    def gain_button_handler(self, increment, event=None) -> None:
-        if globe.dut is None:  # never happens, but this makes the linter happy
-            return
-        try:
-            g = float(self._gain_s.get())
-            g += (increment * globe.dut.attn_step_size)
-            a = globe.dut.nominal_gain - g
-            if a < 0:
-                a = 0
-            logger.info("setting the attn to " + str(a))
-            globe.dut.set_attn(a)
-            # can't just query the gain because there was 1 unit w/o a gain query
-            g = globe.dut.nominal_gain - globe.dut.get_attn()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-            return
-        self._gain_s.set('{0:5.2f}'.format(g))
-
     def bypass_handler(self, event=None) -> None:
         if globe.dut is None:  # never happens, but this makes the linter happy
             return
@@ -379,7 +297,6 @@ class MainWindow(tk.Frame):
             self.status1("Not Connected to Device", bg='red')
             return
         self.bypass_i.set(r)
-
     def overpower_handler(self, event=None) -> None:
         if globe.dut is None:  # never happens
             return
@@ -495,54 +412,6 @@ class MainWindow(tk.Frame):
 
 
 
-    """
-     def freq_button_handler(self, increment, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        try:
-            f = float(self._freq_s.get())
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-            return
-        f += increment
-        logger.info("setting the freq to " + str(f))
-        try:
-            globe.dut.set_freq(f)
-            f2 = globe.dut.get_freq()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        else:
-            self._freq_s.set("{:.6f}".format(f2))
-
-
-    def freq_box_handler(self, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        s = None
-        f = 0.0
-        try:
-            s = self._freq_s.get()
-            f = float(s)
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-        logger.info("setting the freq to " + str(f))
-        try:
-            globe.dut.set_freq(f)
-            f = globe.dut.get_freq()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        self._freq_s.set("{:.6f}".format(f))
-    """
 
     def connect_button_handler(self, event=None) -> None:
         success = None
@@ -655,15 +524,10 @@ class MainWindow(tk.Frame):
 
         try:
             # can't just query the gain cuz there was 1 unit w/o a gain query
-            self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
             self.bypass_i.set(globe.dut.get_bypass())
             self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
             self.write_b.set(globe.dut.get_eeprom_write_mode())
-            # let the UF wait til other widgets are being enabled, looks bad to do it first
-            # uf_mode = globe.dut.get_uf_mode()
-            # self._ufmode_i.set(uf_mode)
-            # uf_setting = globe.dut.get_ultrafine()
-            # self._uf_s.set(str(uf_setting))
+
         except device.DeviceResponseError as e:
             logger.error(e.__class__)
             self.status1("Bad or no response from device", bg='red')
@@ -676,10 +540,8 @@ class MainWindow(tk.Frame):
             logger.error(e.__class__)
             self.status1("No response from device", bg='red')
             return
-        self.enable_widgets(True, uf_mode)
+        self.enable_widgets(True)
         # self.poll_for_overpower_bypass()
-
-
     def poll_for_overpower_bypass(self) -> None:
         if self.overpower_bypass_b.get():
             if globe.dut is not None:
@@ -721,7 +583,6 @@ class MainWindow(tk.Frame):
     #     else:
     #         self.status_bar3.config(text = "")
     #     self.after(poll_timing, self.listen_for_overpower_bypass)
-
 
 def encode(data, key):
     if data == '':
