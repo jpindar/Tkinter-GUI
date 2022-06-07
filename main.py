@@ -41,7 +41,7 @@ globe.user_interrupt = False
 globe.unsaved = False
 poll_timing = 1000
 password_file = "settings.txt"
-key1 = "NoStepOnSnek1234"
+key1 = "123456"  # obviously this isn't secure, it's just an example
 logger = logging.getLogger(__name__)
 if ENABLE_LOGGING:
     logging.basicConfig(filename=log_filename, filemode='w', format='%(levelname)-8s:%(asctime)s %(name)s: %(message)s',
@@ -141,7 +141,6 @@ class MainWindow(tk.Frame):
         self.parent = parent  # main window's parent is root
         self.my_settings_window = None
         self.unsaved_text = False
-        self.overpower_bypass_b = tk.BooleanVar()
         self.write_b = tk.BooleanVar()
         self.logging_b = tk.BooleanVar()
         self.fast_baud_b = tk.BooleanVar()
@@ -153,11 +152,11 @@ class MainWindow(tk.Frame):
         self.top_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#00FF00')
         self.top_frame.grid(row=0, column=0, sticky=tk.NS + tk.EW)
 
-        self.freq_frame = tk.Frame(self, height=2, width=3, relief=tk.FLAT, borderwidth=0)
-        self.freq_frame.grid(row=1, column=0, padx=(5, 2), pady=2, sticky=tk.N + tk.EW)
+        self.mid_frame_1 = tk.Frame(self, height=2, width=3, relief=tk.FLAT, borderwidth=0)
+        self.mid_frame_1.grid(row=1, column=0, padx=(5, 2), pady=2, sticky=tk.N + tk.EW)
 
-        self.mid_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#0000FF')
-        self.mid_frame.grid(row=2, column=0, padx=(5, 2), sticky=tk.NS + tk.EW)
+        self.mid_frame_2 = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#8888FF')
+        self.mid_frame_2.grid(row=2, column=0, padx=(5, 2), sticky=tk.NS + tk.EW)
 
         self.rowconfigure(9, weight=1)  # this row is a spacer
         tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#FF00FF').grid(row=9, column=0)
@@ -168,7 +167,6 @@ class MainWindow(tk.Frame):
 
         self.__create_menus()
         self.__fill_top_frame()
-
         self.__fill_mid_frame()
         self.__fill_bottom_bar()
         self.top_bar1.tkraise()
@@ -187,10 +185,8 @@ class MainWindow(tk.Frame):
         # overpower and write enable can be read from dut in GUI refresh
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
-        self.option_menu.add_checkbutton(label="Over power protection", onvalue=1, offvalue=0,
-                                         variable=self.overpower_bypass_b, command=self.overpower_handler)
-        self.option_menu.add_checkbutton(label="EEPROM write enable", onvalue=1, offvalue=0,
-                                         variable=self.write_b, command=self.write_handler)
+        self.option_menu.add_checkbutton(label="enable some feature", onvalue=1, offvalue=0,
+                                         variable=self.write_b, command=self.feature_handler)
         self.option_menu.add_checkbutton(label="115200 baud", onvalue=1, offvalue=0,
                                          variable=self.fast_baud_b, command=self.fast_baud_handler)
         self.option_menu.add_checkbutton(label="save password", onvalue=1, offvalue=0,
@@ -232,20 +228,20 @@ class MainWindow(tk.Frame):
 
 
     def __fill_mid_frame(self):
-        self.uf_frame = tk.Frame(self.mid_frame, height=5, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
-        self.uf_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.A_frame = tk.Frame(self.mid_frame_2, height=5, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
+        self.A_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.spacer_label = tk.Label(self.A_frame, text="SPACER")
+        self.spacer_label.grid(row=0, column=0, sticky=tk.W)
 
-        self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
-        self.gain_frame.grid(row=1, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.B_frame = tk.Frame(self.mid_frame_2, height=1, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
+        self.B_frame.grid(row=1, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.spacer_label = tk.Label(self.B_frame, text="SPACER")
+        self.spacer_label.grid(row=0, column=0, sticky=tk.W)
 
-        self.bypass_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
-        self.bypass_frame.grid(row=2, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
-
-        self.bypass_i = tk.IntVar()
-        self.bypass_chk = tk.Checkbutton(self.bypass_frame, text="manual bypass", variable=self.bypass_i, command=self.bypass_handler)
-        self.bypass_chk.grid(row=0, column=0, sticky=tk.W)
-        self.bypass_chk.config(state=tk.DISABLED)
-
+        self.C_frame = tk.Frame(self.mid_frame_2, height=1, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
+        self.C_frame.grid(row=2, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        self.spacer_label = tk.Label(self.C_frame, text="SPACER")
+        self.spacer_label.grid(row=0, column=0, sticky=tk.W)
 
     def __fill_bottom_bar(self):
         self.status_bar1 = tk.Label(self.bottom_bar, text=' ', font=text_font)
@@ -269,58 +265,10 @@ class MainWindow(tk.Frame):
         self.option_menu.entryconfig(1, state=new_state)
         self.option_menu.entryconfig(2, state=tk.NORMAL)  # always enabled
 
-        self.bypass_chk.config(state=new_state)
-
-
     # These functions have an optional 'event' parameter because button binding passes an
     # event object to the callback function, but the menu doesn't.
     # So you need it if the function is invoked by a button press, but not if it is from
     # a menu. It's easiest just to put the optional parameter on all of them.
-    def bypass_handler(self, event=None) -> None:
-        if globe.dut is None:  # never happens, but this makes the linter happy
-            return
-        s = None
-        try:
-            s = self.bypass_i.get()
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in bypass_handler")
-        b = bool(s == 1)
-        logger.info("setting the dut byp to " + str(b))
-        try:
-            globe.dut.set_bypass(b)
-            r = globe.dut.get_bypass()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        self.bypass_i.set(r)
-    def overpower_handler(self, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        s = None
-        try:
-            s = self.overpower_bypass_b.get()
-        except ValueError as e:
-            logger.warning(e.__class__)
-        if s:
-            b = 1
-        else:
-            b = 0
-        logger.info("setting the over power protection to " + str(b))
-        try:
-            globe.dut.set_overpower_bypass_enable(b)
-            r = globe.dut.get_overpower_bypass_enable()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        self.overpower_bypass_b.set(r)
-
 
     def logging_handler(self, event=None) -> None:
         b = self.logging_b.get()
@@ -330,10 +278,9 @@ class MainWindow(tk.Frame):
             logging.disable(999)  # disables logging
 
 
-    def write_handler(self, event=None) -> None:
+    def feature_handler(self, event=None) -> None:
         """
-        why is this even here? If someone needs this, they should set it in their code,
-        not from the GUI
+        whatever feature you want to toggle
         """
         if globe.dut is None:  # never happens
             return
@@ -341,16 +288,17 @@ class MainWindow(tk.Frame):
             s = self.write_b.get()
         except ValueError as e:
             logger.warning(e.__class__)
-            logger.warning("value error in write_handler")
+            logger.warning("value error in feature_handler")
             return
         if s:
             b = 1
         else:
             b = 0
-        logger.info("setting the EEPROM write to " + str(b))
+        logger.info("setting the feature to " + str(b))
         try:
-            globe.dut.set_eeprom_write_mode(b)
-            r = globe.dut.get_eeprom_write_mode()
+            pass   # commented out because the device doesn't have these commands at this time
+            # globe.dut.set_feature_mode(b)
+            # r = globe.dut.get_feature_mode()
         except device.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
@@ -521,13 +469,9 @@ class MainWindow(tk.Frame):
     def refresh_gui(self) -> None:
         if globe.dut is None:  # never happens
             return
-
         try:
-            # can't just query the gain cuz there was 1 unit w/o a gain query
-            self.bypass_i.set(globe.dut.get_bypass())
-            self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
-            self.write_b.set(globe.dut.get_eeprom_write_mode())
-
+            pass
+            # self.write_b.set(globe.dut.get_feature_mode())
         except device.DeviceResponseError as e:
             logger.error(e.__class__)
             self.status1("Bad or no response from device", bg='red')
@@ -541,48 +485,7 @@ class MainWindow(tk.Frame):
             self.status1("No response from device", bg='red')
             return
         self.enable_widgets(True)
-        # self.poll_for_overpower_bypass()
-    def poll_for_overpower_bypass(self) -> None:
-        if self.overpower_bypass_b.get():
-            if globe.dut is not None:
-                if globe.dut.port.is_open():
-                    try:
-                        op = globe.dut.get_overpower_status()
-                    except device.DeviceResponseError as e:
-                        self.status1("Bad or no response from device", bg='red')
-                        return
-                    except device.DeviceLoggedOutError as e:
-                        self.status1("Not Connected to Device", bg='red')
-                        return
-                    if op:
-                        self.status_bar3.config(text="OVER POWER BYPASS", bg='red')
-                    else:
-                        self.status_bar3.config(text="", bg='SystemButtonFace')
-        else:
-            self.status_bar3.config(text="", bg='SystemButtonFace')
-        self.after(poll_timing, self.poll_for_overpower_bypass)
 
-
-    # def listen_for_overpower_bypass(self):
-    #     #  if True:  # TODO implement a way to toggle this # self.overpower_bypass_b
-    #     if globe.dut is not None:
-    #         if globe.dut.port.is_open():
-    #             try:
-    #                 op = globe.dut.port.read()
-    #             except Exception as e:
-    #                  logger.error(e.__class__)
-    #             if op is not None:
-    #                 if "OVERPOWER" in op:
-    #                     self.status_bar3.config(text = "OVERPOWER")
-    #                     self.update()
-    #                     time.sleep(0.2)
-    #                     self.status_bar3.config(text = " ")
-    #                     self.update()
-    #             else:
-    #                 self.status_bar3.config(text = "")
-    #     else:
-    #         self.status_bar3.config(text = "")
-    #     self.after(poll_timing, self.listen_for_overpower_bypass)
 
 def encode(data, key):
     if data == '':
