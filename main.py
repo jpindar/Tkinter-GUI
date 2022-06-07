@@ -60,15 +60,15 @@ class MainWindow(tk.Frame):
     Note that all of the TopBarN frames overlay each other, and the one we
     want to be active at any time is brought to the top
     """
-    major_freq_increment = 1
-    minor_freq_increment = 0.0025  # TODO read this from channel spacing
+    # major_freq_increment = 1
+    # minor_freq_increment = 0.0025  # TODO read this from channel spacing
 
     """  TopBar1 contains the address dropdown, a connect button, and the logo """
     class TopBar1(tk.Frame):
         def __init__(self, parent, gparent, **kw):
             super().__init__(parent, **kw)
             self.comport_str = tk.StringVar()
-            self.comport_label = tk.Label(self, text="Connection", bg='#D9E5EE')
+            self.comport_label = tk.Label(self, text="Connection", bg=kw['background'])
             self.comport_label.grid(row=0, column=0, sticky=tk.E)
             self.comport_dropdown = ttk.OptionMenu(self, self.comport_str, command=self.comport_handler)
             self.comport_dropdown.config(width=8)
@@ -150,17 +150,17 @@ class MainWindow(tk.Frame):
         logger.info("creating main window")
         self.terminal_window = terminalwindow.TerminalWindow(self.parent, globe.dev_null)
 
-        self.top_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#D9E5EE')
+        self.top_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#00FF00')
         self.top_frame.grid(row=0, column=0, sticky=tk.NS + tk.EW)
 
-        self.freq_frame = tk.Frame(self, height=2, width=3, relief=tk.GROOVE, borderwidth=4)
-        self.freq_frame.grid(row=1, column=0, padx=(5, 2), pady=5, sticky=tk.N + tk.EW)
+        self.freq_frame = tk.Frame(self, height=2, width=3, relief=tk.FLAT, borderwidth=0)
+        self.freq_frame.grid(row=1, column=0, padx=(5, 2), pady=2, sticky=tk.N + tk.EW)
 
-        self.mid_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0)
-        self.mid_frame.grid(row=2, column=0, sticky=tk.NS + tk.EW)
+        self.mid_frame = tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#0000FF')
+        self.mid_frame.grid(row=2, column=0,padx=(5, 2), sticky=tk.NS + tk.EW)
 
         self.rowconfigure(9, weight=1)  # this row is a spacer
-        tk.Frame(self, relief=tk.FLAT, borderwidth=0).grid(row=9, column=0)
+        tk.Frame(self, relief=tk.FLAT, borderwidth=0, bg='#FF00FF').grid(row=9, column=0)
 
         self.bottom_bar = tk.Frame(self, height=40, borderwidth=5, relief='ridge')
         self.bottom_bar.grid(row=10, column=0, columnspan='2', sticky=tk.N + tk.S + tk.E + tk.W)
@@ -168,7 +168,7 @@ class MainWindow(tk.Frame):
 
         self.__create_menus()
         self.__fill_top_frame()
-        self.__fill_freq_frame()
+
         self.__fill_mid_frame()
         self.__fill_bottom_bar()
         self.top_bar1.tkraise()
@@ -212,9 +212,9 @@ class MainWindow(tk.Frame):
     def __fill_top_frame(self):
         # three top_bars, only one will be visible at a time
         # their parent is the top_frame, their gparent is MainWindow
-        self.top_bar1 = self.TopBar1(self.top_frame, gparent=self, width=290, background='#D9E5EE')
-        self.top_bar2 = self.TopBar2(self.top_frame, gparent=self, width=290, background='#D9E5EE')
-        self.top_bar3 = self.TopBar3(self.top_frame, gparent=self, width=290, background='#D9E5EE')
+        self.top_bar1 = self.TopBar1(self.top_frame, gparent=self, width=290, background='#8888FF')
+        self.top_bar2 = self.TopBar2(self.top_frame, gparent=self, width=290, background='#8888FF')
+        self.top_bar3 = self.TopBar3(self.top_frame, gparent=self, width=290, background='#8888FF')
 
         self.top_bar1.configure(borderwidth=2, relief='flat')
         self.top_bar2.configure(borderwidth=2, relief='flat')
@@ -230,40 +230,10 @@ class MainWindow(tk.Frame):
         self.image_label.grid(row=0, column=4, sticky=tk.NS + tk.E)
 
 
-    def __fill_freq_frame(self):
-        self.freq_subframe1 = tk.Frame(self.freq_frame, height=1, width=4)
-        self.freq_subframe1.grid(row=0, column=0)
-        self.freq_subframe2 = tk.Frame(self.freq_frame, height=1, width=4)
-        self.freq_subframe2.grid(row=1, column=0)
-
-        self.start_label = tk.Label(self.freq_subframe1, text="     ", width=16, anchor=tk.W)
-        self.start_label.grid(row=0, column=0, padx=5, sticky=tk.W)
-        tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=1, sticky=tk.EW)
-        tk.Label(self.freq_subframe1, text="", width=15).grid(row=0, column=2, sticky=tk.EW)
-        self.freq_label1 = tk.Label(self.freq_subframe1, text=" FREQUENCY IN MHZ", width=20, state=tk.DISABLED)
-        self.freq_label1.grid(row=0, column=2, sticky=tk.EW)
-        tk.Label(self.freq_subframe1, text="", width=1).grid(row=0, column=3, sticky=tk.EW)
-        self.stop_label = tk.Label(self.freq_subframe1, text="     ", width=16, anchor=tk.E)
-        self.stop_label.grid(row=0, column=4, padx=5, sticky=tk.E)
-
-        self._freq_s = tk.StringVar()
-        self.leftButton = tk.Button(self.freq_subframe2, text='<<', command=lambda: self.freq_button_handler(-1 * self.major_freq_increment))
-        self.leftButton.grid(row=1, column=1, padx=1, pady=3, sticky='e')
-        self.leftButton2 = tk.Button(self.freq_subframe2, text='<', command=lambda: self.freq_button_handler(-1 * self.minor_freq_increment))
-        self.leftButton2.grid(row=1, column=2, padx=1, pady=3, sticky='e')
-        self.freq_box = tk.Entry(self.freq_subframe2, textvariable=self._freq_s, width=10, font="-weight bold")
-        self.freq_box.grid(row=1, column=3, padx=5)
-        self.freq_box.bind('<Return>', self.freq_box_handler)
-        self.freq_box.config(state=tk.DISABLED)
-        self.rightButton = tk.Button(self.freq_subframe2, text='>', command=lambda: self.freq_button_handler(self.minor_freq_increment))
-        self.rightButton.grid(row=1, column=4, padx=1, pady=3, sticky='w')
-        self.rightButton2 = tk.Button(self.freq_subframe2, text='>>', command=lambda: self.freq_button_handler(self.major_freq_increment))
-        self.rightButton2.grid(row=1, column=5, padx=1, pady=3, sticky='w')
-
 
     def __fill_mid_frame(self):
-        self.uf_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
-        self.uf_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
+        # self.uf_frame = tk.Frame(self.mid_frame, height=5, width=3, relief=tk.GROOVE, borderwidth=4, bg="#00FFFF")
+        # self.uf_frame.grid(row=0, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
         self.gain_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
         self.gain_frame.grid(row=1, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
@@ -271,27 +241,7 @@ class MainWindow(tk.Frame):
         self.bypass_frame = tk.Frame(self.mid_frame, height=1, width=3, relief=tk.GROOVE, borderwidth=4)
         self.bypass_frame.grid(row=2, column=0, rowspan=1, padx=5, pady=5, sticky=tk.N + tk.E + tk.W)
 
-        self._uf_s = tk.StringVar()
-        self.uf_label = tk.Label(self.uf_frame, text="UltraFine tuning", width=16)
-        self.uf_label.grid(row=0, column=0, sticky=tk.W)
-        self.uf_label.config(state=tk.DISABLED)
-        self._ufmode_i = tk.IntVar()
-        self.ufmode_radio1 = tk.Radiobutton(self.uf_frame, text="calibrated", value=1,
-                                            variable=self._ufmode_i, command=self.ufmode_handler)
-        self.ufmode_radio1.grid(row=1, column=0, sticky=tk.W)
-        self.ufmode_radio1.config(state=tk.DISABLED)
-        self.ufmode_radio0 = tk.Radiobutton(self.uf_frame, text="adjustable(0-255)", value=0,
-                                            variable=self._ufmode_i, command=self.ufmode_handler)
-        self.ufmode_radio0.grid(row=2, column=0, sticky=tk.W)
-        self.ufmode_radio0.config(state=tk.DISABLED)
-        self.uf_leftButton = tk.Button(self.uf_frame, text='<', command=lambda: self.uf_button_handler(-1))
-        self.uf_leftButton.grid(row=2, column=1, padx=3)
-        self.uf_box = tk.Entry(self.uf_frame, textvariable=self._uf_s, width=5, font="-weight bold")
-        self.uf_box.grid(row=2, column=2, padx=5, pady=5, sticky=tk.W)
-        self.uf_box.bind('<Return>', self.uf_box_handler)
-        self.uf_box.config(state=tk.DISABLED)
-        self.uf_rightButton = tk.Button(self.uf_frame, text='>', command=lambda: self.uf_button_handler(1))
-        self.uf_rightButton.grid(row=2, column=3, padx=3, sticky='e')
+
 
         self.bypass_i = tk.IntVar()
         self.bypass_chk = tk.Checkbutton(self.bypass_frame, text="manual bypass", variable=self.bypass_i, command=self.bypass_handler)
@@ -333,32 +283,12 @@ class MainWindow(tk.Frame):
         self.option_menu.entryconfig(0, state=new_state)
         self.option_menu.entryconfig(1, state=new_state)
         self.option_menu.entryconfig(2, state=tk.NORMAL)  # always enabled
-        self.freq_box.config(state=new_state)
-        self.freq_label1.config(state=new_state)
-        self.start_label.config(state=new_state)
-        self.stop_label.config(state=new_state)
-        self.rightButton.config(state=new_state)
-        self.rightButton2.config(state=new_state)
-        self.leftButton.config(state=new_state)
-        self.leftButton2.config(state=new_state)
+
         self.bypass_chk.config(state=new_state)
         self.gain_label.config(state=new_state)
         self.gain_box.config(state=new_state)
         self.gain_leftButton.config(state=new_state)
         self.gain_rightButton.config(state=new_state)
-        self.uf_label.config(state=new_state)
-        self.ufmode_radio0.config(state=new_state)
-        self.ufmode_radio1.config(state=new_state)
-        if uf_mode:
-            self.uf_label.config(state=tk.DISABLED)
-            self.uf_box.config(state=tk.DISABLED)
-            self.uf_leftButton.config(state=tk.DISABLED)
-            self.uf_rightButton.config(state=tk.DISABLED)
-        else:
-            self.uf_label.config(state=new_state)
-            self.uf_box.config(state=new_state)
-            self.uf_leftButton.config(state=new_state)
-            self.uf_rightButton.config(state=new_state)
 
 
     # These functions have an optional 'event' parameter because button binding passes an
@@ -563,82 +493,10 @@ class MainWindow(tk.Frame):
         #    return
         # self.fast_baud_b.set(b)
 
-    def ufmode_handler(self, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        s = None
-        try:
-            s = self._ufmode_i.get()
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in ufmode_handler")
-        b = bool(s == 1)
-        logger.info("setting the uf mode to " + str(b))
-        try:
-            globe.dut.set_uf_mode(b)
-            r = globe.dut.get_uf_mode()
-            n = globe.dut.get_ultrafine()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
 
-        self._ufmode_i.set(r)
-        if r:
-            self.uf_box.config(state=tk.DISABLED)
-            self.uf_leftButton.config(state=tk.DISABLED)
-            self.uf_rightButton.config(state=tk.DISABLED)
-        else:
-            self.uf_box.config(state=tk.NORMAL)
-            self.uf_leftButton.config(state=tk.NORMAL)
-            self.uf_rightButton.config(state=tk.NORMAL)
-            self._uf_s.set(str(n))
 
-    def uf_box_handler(self, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        try:
-            s = self._uf_s.get()
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-            return
-        logger.info("setting the ultrafine to " + str(s))
-        try:
-            globe.dut.set_ultrafine(s)
-            f = globe.dut.get_ultrafine()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        self._uf_s.set(str(f))
-
-    def uf_button_handler(self, increment, event=None) -> None:
-        if globe.dut is None:  # never happens
-            return
-        try:
-            f = int(self._uf_s.get())
-        except ValueError as e:
-            logger.warning(e.__class__)
-            logger.warning("value error in " + inspect.stack()[0][3])
-            return
-        f += increment
-        try:
-            globe.dut.set_ultrafine(f)
-            f = globe.dut.get_ultrafine()
-        except device.DeviceResponseError as e:
-            self.status1("Bad or no response from device", bg='red')
-            return
-        except device.DeviceLoggedOutError as e:
-            self.status1("Not Connected to Device", bg='red')
-            return
-        self._uf_s.set(str(f))
-
-    def freq_button_handler(self, increment, event=None) -> None:
+    """
+     def freq_button_handler(self, increment, event=None) -> None:
         if globe.dut is None:  # never happens
             return
         try:
@@ -684,7 +542,7 @@ class MainWindow(tk.Frame):
             self.status1("Not Connected to Device", bg='red')
             return
         self._freq_s.set("{:.6f}".format(f))
-
+    """
 
     def connect_button_handler(self, event=None) -> None:
         success = None
@@ -706,7 +564,8 @@ class MainWindow(tk.Frame):
             try:
                 s = self.top_bar1.comport_str.get()
                 self.status1("connecting...", bg='SystemButtonFace')
-                success = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.serial)
+                # success = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.serial)
+                success = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.mock)
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("Can't open a serial port\n")
@@ -793,26 +652,18 @@ class MainWindow(tk.Frame):
     def refresh_gui(self) -> None:
         if globe.dut is None:  # never happens
             return
-        uf_mode = None  # This is the only variable here because its the only one used after the try
+
         try:
-            start_freq = globe.dut.get_start_freq()
-            stop_freq = globe.dut.get_stop_freq()
-            # both of these ways  of setting the label work.
-            # is the second one more efficient?
-            self.start_label.configure(text=str(start_freq) + ' MHz')
-            self.stop_label['text'] = str(stop_freq) + ' MHz'
-            self._freq_s.set("{:.6f}".format(globe.dut.get_freq()))
-            self.minor_freq_increment = globe.dut.get_chan_spacing() / const.HZ_PER_MHZ
             # can't just query the gain cuz there was 1 unit w/o a gain query
             self._gain_s.set(str(globe.dut.nominal_gain - globe.dut.get_attn()))
             self.bypass_i.set(globe.dut.get_bypass())
             self.overpower_bypass_b.set(globe.dut.get_overpower_bypass_enable())
             self.write_b.set(globe.dut.get_eeprom_write_mode())
             # let the UF wait til other widgets are being enabled, looks bad to do it first
-            uf_mode = globe.dut.get_uf_mode()
-            self._ufmode_i.set(uf_mode)
-            uf_setting = globe.dut.get_ultrafine()
-            self._uf_s.set(str(uf_setting))
+            # uf_mode = globe.dut.get_uf_mode()
+            # self._ufmode_i.set(uf_mode)
+            # uf_setting = globe.dut.get_ultrafine()
+            # self._uf_s.set(str(uf_setting))
         except device.DeviceResponseError as e:
             logger.error(e.__class__)
             self.status1("Bad or no response from device", bg='red')
