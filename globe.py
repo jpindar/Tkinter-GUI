@@ -14,8 +14,7 @@ logger = logging.getLogger(__name__)
 user_pause = False
 # exiting = False
 # file_name = None
-dut = None
-
+dmm = None
 
 # port serial_port_num should default to 0 to make other routines
 # know it may not be valid
@@ -55,12 +54,12 @@ class DevNull:
 dev_null = DevNull()
 
 
-def close_dut():
-    global dut
-    dut.port.close_port()
-    dut.port = None
-    dut = None
-    return
+# def close_dut():
+#     global dmm
+#     dmm.port.close_port()
+#     dmm.port = None
+#     dmm = None
+#     return
 
 
 def parse_comport_name(c):

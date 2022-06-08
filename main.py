@@ -24,12 +24,13 @@ from tkinter import font
 import sys
 import cryptlib
 import socketdevice
-import serialdevice_pyserial
+# import serialdevice_pyserial
 import terminalwindow
 import const
 import globe
-import device
-
+# import device
+from serialdevice import get_ports
+import multimeter
 
 ENABLE_LOGGING = True
 log_filename = 'Device.log'
@@ -89,7 +90,7 @@ class MainWindow(tk.Frame):
                 pass
 
         def populate_comport_menu(self) -> bool:
-            possible_ports = serialdevice_pyserial.get_ports()
+            possible_ports = get_ports()
             if possible_ports[0] != '':  # TODO make this cross platform
                 possible_ports = ["COM" + str(p) for p in possible_ports]
                 possible_ports.append('network')
@@ -282,7 +283,7 @@ class MainWindow(tk.Frame):
         """
         whatever feature you want to toggle
         """
-        if globe.dut is None:  # never happens
+        if globe.dmm is None:  # never happens
             return
         try:
             s = self.write_b.get()
@@ -299,10 +300,10 @@ class MainWindow(tk.Frame):
             pass   # commented out because the device doesn't have these commands at this time
             # globe.dut.set_feature_mode(b)
             # r = globe.dut.get_feature_mode()
-        except device.DeviceResponseError as e:
+        except multimeter.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
-        except device.DeviceLoggedOutError as e:
+        except multimeter.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
         # self.write_b.set(r)
@@ -340,15 +341,15 @@ class MainWindow(tk.Frame):
         # TODO move these to dut
         if s:
             b = 1
-            serialdevice_pyserial.baud_rate = 115200
+            globe.dmm.baud_rate = 115200
         else:
             b = 0
-            serialdevice_pyserial.baud_rate = 19200
+            globe.dmm.baud_rate = 19200
         logger.info("setting the fast_baud to " + str(b))
         try:
-            if globe.dut is not None:
-                globe.dut.set_baud(b)
-        except device.DeviceResponseError as e:
+           if globe.dmm is not None:
+                globe.dmm.set_baud(b)
+        except multimeter.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')
             return
         except Exception as e:
@@ -362,11 +363,11 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler(self, event=None) -> None:
-        success = None
+        # success = None
         self.status1(" ", bg='SystemButtonFace')
         self.enable_widgets(False)
-        if globe.dut is not None:
-            globe.close_dut()  # this sets globe.dut to None
+        if globe.dmm is not None:
+            globe.dmm.close_port()  #
         if self.top_bar1.comport_str.get() == 'network':
             self.top_bar2.tkraise()
             self.top_bar2.remote_address_box.focus_set()
@@ -381,8 +382,9 @@ class MainWindow(tk.Frame):
             try:
                 s = self.top_bar1.comport_str.get()
                 self.status1("connecting...", bg='SystemButtonFace')
-                # success = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.serial)
-                success = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.mock)
+                # dmm = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.serial)
+                # dmm = globe.open_dut([s], self.terminal_window.textbox, globe.DUTKind.mock)
+                globe.dmm = multimeter.Multimeter()
             except Exception as e:
                 logger.error(e.__class__)
                 logger.error("Can't open a serial port\n")
@@ -390,13 +392,14 @@ class MainWindow(tk.Frame):
                 self.status1("Cannot connect to a device on that port", bg='red')
                 return
         # would dut be None if it had been disconnected? No.
-        if globe.dut is None:
+        if globe.dmm is None:
             self.status1("Cannot connect to device on that port", bg='red')
             return
-        if not success:
-            self.status1("Cannot connect to device on that port", bg='red')
-            return
+        # if not success:
+        #     self.status1("Cannot connect to device on that port", bg='red')
+        #     return
         self.refresh_gui()
+        s = globe.dmm.get_ID()
         self.status1("Connected", bg='SystemButtonFace')  # self.status_bar1.config(text = "Connected to " + s)
         # self.poll_for_overpower_bypass()
         # self.listen_for_overpower_bypass()
@@ -429,7 +432,7 @@ class MainWindow(tk.Frame):
 
 
     def connect_button_handler3(self, event=None) -> None:
-        if globe.dut is None:  # never happens
+        if globe.dmm is None:  # never happens
             return
         self.enable_widgets(False)  # not sure if this is needed here or in connect_button_handler2
         success = None
@@ -467,20 +470,20 @@ class MainWindow(tk.Frame):
 
 
     def refresh_gui(self) -> None:
-        if globe.dut is None:  # never happens
+        if globe.dmm is None:  # never happens
             return
         try:
             pass
             # self.write_b.set(globe.dut.get_feature_mode())
-        except device.DeviceResponseError as e:
+        except multimeter.DeviceResponseError as e:
             logger.error(e.__class__)
             self.status1("Bad or no response from device", bg='red')
             return
-        except device.DeviceLoggedOutError as e:
+        except multimeter.DeviceLoggedOutError as e:
             logger.error(e.__class__)
             self.status1("Not Connected to Device", bg='red')
             return
-        except device.DeviceTimeoutError as e:
+        except multimeter.DeviceTimeoutError as e:
             logger.error(e.__class__)
             self.status1("No response from device", bg='red')
             return
@@ -614,8 +617,8 @@ def display_help_messagebox(event=None):
 
 def exit_handler(event=None):
     logger.info('QUITTING')
-    if globe.dut is not None:
-        globe.close_dut()
+    if globe.dmm is not None:
+        globe.dmm.close_port()
     logger.info('calling root.destroy and os.exit()')
     root.destroy()
     # not sure if os._exit is the best practice here, but it works OK
