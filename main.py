@@ -305,7 +305,7 @@ class MainWindow(tk.Frame):
         except device.DeviceLoggedOutError as e:
             self.status1("Not Connected to Device", bg='red')
             return
-        self.write_b.set(r)
+        # self.write_b.set(r)
 
     def save_password_handler(self, event=None) -> None:
         try:
