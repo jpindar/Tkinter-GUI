@@ -14,6 +14,27 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+class DeviceError(Exception):
+    def __init___(self, name, response):
+        super().__init__()
+        self.name = name
+        self.response = response
+
+
+class DeviceLoggedOutError(DeviceError):
+    def __init___(self, name, response):
+        super().__init__()
+
+
+class DeviceTimeoutError(DeviceError):
+    def __init___(self, name, response):
+        super().__init__()
+
+
+class DeviceResponseError(DeviceError):
+    def __init___(self, name, response):
+        super().__init__()
+
 
 class Multimeter(serialdevice.SerialDevice):
     """
@@ -31,7 +52,7 @@ class Multimeter(serialdevice.SerialDevice):
     timeout = 5.0
 
 
-    def __init__(self, address: int = default_address, baud=default_baud):
+    def __init__(self, address: int = default_address, baud:int = default_baud):
         super().__init__()
         self.port_num = address
         self.baud_rate = baud
