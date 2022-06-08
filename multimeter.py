@@ -20,7 +20,8 @@ class Multimeter(serialdevice.SerialDevice):
     controls a Fluke 8845A digital multimeter
     """
     default_address = 5  # address to use if optional parameter is not supplied by caller
-    display_name = 'Fluke Multimeter' # name to use in GUI messages etc.
+    default_baud = 19200
+    display_name = 'Fluke Multimeter'  # name to use in GUI messages etc.
     ID_QUERY = "*IDN?\n"
     GOOD_ID_RESPONSE = "FLUKE,8845A,9344019,09/29/06-16:59"  # when in 8845A mode
     GOOD_ID_RESPONSE_45 = "FLUKE, 45, 9344019, 2.0 D2.0"  # when in Fluke 45 emulation mode
@@ -30,11 +31,11 @@ class Multimeter(serialdevice.SerialDevice):
     timeout = 5.0
 
 
-    def __init__(self, address: int = default_address):
+    def __init__(self, address: int = default_address, baud=default_baud):
         super().__init__()
         self.port_num = address
-        self.baud_rate = 19200
-        self.open_port() # defaults to self.port_num
+        self.baud_rate = baud
+        self.open_port()
 
     def reset(self):
         self.write("*rst\n")
@@ -48,7 +49,7 @@ class Multimeter(serialdevice.SerialDevice):
         return response
 
     def remote(self):
-        self.write("SYST:REM\n"  )
+        self.write("SYST:REM\n")
 
     def query(self, cmd: str) -> Optional[str]:
         """ TODO: implement the Abort, Retry, Ignore system that I used in the complete software
@@ -58,7 +59,7 @@ class Multimeter(serialdevice.SerialDevice):
         finished = False
         while not finished:
             try:
-                logger.info("sending <" + cmd +">"  )
+                logger.info("sending <" + cmd + ">")
                 self.write(cmd)
                 time.sleep(self.read_delay)
                 response = self.read()
@@ -98,22 +99,20 @@ class Multimeter(serialdevice.SerialDevice):
         logger.info(str("response is " + s))
         return s
 
-
-
     def get_DCVolts(self, scale=None):
         """
          note that this returns 9.9E37 when the device's display reads "overload"
         """
         s = None
         cmd = "MEAS:VOLT:DC? "
-        if  scale is not None:
-            cmd +=str(scale)
+        if scale is not None:
+            cmd += str(scale)
         cmd += "\n"
         logger.info(str("sending query: " + cmd))
         try:
             s = self.query(cmd)
         except (serialdevice.serial.SerialException, serialdevice.serial.SerialTimeoutException) as e:
-            logger.warning("SerialDevice.query\r\n" )
+            logger.warning("SerialDevice.query\r\n")
             logger.warning(e.__class__)
             logger.warning(e.__doc__)
             logger.warning(e.args[0])   # or  just args
