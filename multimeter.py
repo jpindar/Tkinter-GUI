@@ -8,6 +8,7 @@ __author__ = 'jpindar@jpindar.com'
 
 import sys
 import time
+from enum import Enum
 from typing import List, Dict, Optional, Any, Union
 import serialdevice
 import logging
@@ -35,6 +36,20 @@ class DeviceResponseError(DeviceError):
     def __init___(self, name, response):
         super().__init__()
 
+class DUTKind(Enum):
+    mock = 0
+    serial = 1
+    network = 2
+
+class DevNull:
+    """ a dummy output object for times when we want to suppress output """
+    def __init__(self):
+        pass
+
+    def append(self, s):
+        pass
+
+dev_null = DevNull()
 
 class Multimeter(serialdevice.SerialDevice):
     """
@@ -52,11 +67,14 @@ class Multimeter(serialdevice.SerialDevice):
     timeout = 5.0
 
 
-    def __init__(self, address: int = default_address, baud:int = default_baud):
+    def __init__(self, address: int = default_address, baud:int = default_baud, kind:DUTKind = DUTKind.serial):
         super().__init__()
+        self.kind = kind
         self.port_num = address
         self.baud_rate = baud
-        self.open_port()
+        self.output = dev_null  # suppress output
+        if self.kind == DUTKind.serial:
+            self.open_port()
 
     def reset(self):
         self.write("*rst\n")
@@ -71,6 +89,9 @@ class Multimeter(serialdevice.SerialDevice):
 
     def remote(self):
         self.write("SYST:REM\n")
+
+    def set_output(self, output):
+        self.output = output
 
     def query(self, cmd: str) -> Optional[str]:
         """ TODO: implement the Abort, Retry, Ignore system that I used in the complete software
@@ -101,8 +122,16 @@ class Multimeter(serialdevice.SerialDevice):
                 raise e
         return response
 
+    def is_correct_id(s):
+        if s is None:
+            return False
+        s2 = s.upper()
+        return bool(s2 == Multimeter.GOOD_ID_RESPONSE)
+
+
     def get_ID(self):
         logger.info(str("sending query: " + self.ID_QUERY))
+        self.output.append(self.ID_QUERY + '\n')
         try:
             s = self.query(self.ID_QUERY)
         except (serialdevice.serial.SerialException, serialdevice.serial.SerialTimeoutException) as e:
@@ -118,6 +147,9 @@ class Multimeter(serialdevice.SerialDevice):
             logger.warning(e.__cause__)
             raise e
         logger.info(str("response is " + s))
+        if s is None:
+            raise DeviceResponseError("None", "Bad response: None")
+        self.output.append(s + '\n')
         return s
 
     def get_DCVolts(self, scale=None):
