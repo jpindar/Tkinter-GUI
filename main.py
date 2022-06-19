@@ -179,32 +179,32 @@ class MainWindow(tk.Frame):
         self.parent.config(menu=self.menu_bar)  # and attach it to MainWindow's parent
 
         self.file_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label='File', menu=self.file_menu)
-        self.file_menu.add_command(label='Exit', command=exit_handler)
+        self.menu_bar.add_cascade(label='File', underline=0, menu=self.file_menu)
+        self.file_menu.add_command(label='Exit', underline=0, command=exit_handler)
 
         # TODO initial state of these?
         # overpower and write enable can be read from dut in GUI refresh
         self.option_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
-        self.option_menu.add_checkbutton(label="enable some feature", onvalue=1, offvalue=0,
+        self.menu_bar.add_cascade(label='Options', underline=0, menu=self.option_menu)
+        self.option_menu.add_checkbutton(label="enable some feature", underline=0, onvalue=1, offvalue=0,
                                          variable=self.write_b, command=self.feature_handler)
-        self.option_menu.add_checkbutton(label="115200 baud", onvalue=1, offvalue=0,
+        self.option_menu.add_checkbutton(label="115200 baud", underline=0, onvalue=1, offvalue=0,
                                          variable=self.fast_baud_b, command=self.fast_baud_handler)
-        self.option_menu.add_checkbutton(label="save password", onvalue=1, offvalue=0,
+        self.option_menu.add_checkbutton(label="save password", underline=0, onvalue=1, offvalue=0,
                                          variable=self.save_password_b, command=self.save_password_handler)
         if ENABLE_LOGGING:
-            self.logging_b = True
-            self.option_menu.add_checkbutton(label="write log file", onvalue=1, offvalue=0, variable=self.logging_b,
+            self.logging_b.set(True)
+            self.option_menu.add_checkbutton(label="write log file", underline=0, onvalue=1, offvalue=0, variable=self.logging_b,
                                              command=self.logging_handler)
 
         self.option_menu.entryconfig(0, state=tk.DISABLED)
         self.option_menu.entryconfig(1, state=tk.DISABLED)
 
         self.about_menu = tk.Menu(self.menu_bar, tearoff=0)
-        self.menu_bar.add_cascade(label='About', menu=self.about_menu)
-        self.about_menu.add_command(label='About', command=display_about_messagebox)
-        self.about_menu.add_command(label='Help', command=display_help_messagebox)
-        self.about_menu.add_command(label='Terminal', command=show_terminal)
+        self.menu_bar.add_cascade(label='About', underline=0, menu=self.about_menu)
+        self.about_menu.add_command(label='About', underline=0, command=display_about_messagebox)
+        self.about_menu.add_command(label='Help', underline=0, command=display_help_messagebox)
+        self.about_menu.add_command(label='Terminal', underline=0, command=show_terminal)
 
     def __fill_top_frame(self):
         # three top_bars, only one will be visible at a time
@@ -347,7 +347,7 @@ class MainWindow(tk.Frame):
             globe.dmm.baud_rate = 19200
         logger.info("setting the fast_baud to " + str(b))
         try:
-           if globe.dmm is not None:
+            if globe.dmm is not None:
                 globe.dmm.set_baud(b)
         except multimeter.DeviceResponseError as e:
             self.status1("Bad or no response from device", bg='red')

@@ -38,8 +38,8 @@ class TextBox(tkst.ScrolledText):
         self.logging_b = tk.BooleanVar()
         if ENABLE_LOGGING:
             self.option_menu = tk.Menu(self, tearoff=0)
-            self.menu_bar.add_cascade(label='Options', menu=self.option_menu)
-            self.option_menu.add_checkbutton(label="log file", onvalue=1, offvalue=0,
+            self.menu_bar.add_cascade(label='Options', underline=0,  menu=self.option_menu)
+            self.option_menu.add_checkbutton(label="log file", underline=0,  onvalue=1, offvalue=0,
                                              variable=self.logging_b, command=self.logging_handler)
 
     def logging_handler(self):
@@ -51,12 +51,12 @@ class TextBox(tkst.ScrolledText):
 
     def __create_context_menu(self):
         self.context_menu = tk.Menu(self, tearoff='no')
-        self.context_menu.add_command(label='Cut', command=self.cut)
-        self.context_menu.add_command(label='Copy', command=self.copy)
-        self.context_menu.add_command(label='Paste', command=self.paste)
-        self.context_menu.add_command(label='Undo', command=self.undo)
-        self.context_menu.add_command(label='Redo', command=self.redo)
-        self.context_menu.add_command(label='Select All', command=self.select_all)
+        self.context_menu.add_command(label='Cut', underline=2,  command=self.cut)
+        self.context_menu.add_command(label='Copy', underline=0,  command=self.copy)
+        self.context_menu.add_command(label='Paste', underline=0,  command=self.paste)
+        self.context_menu.add_command(label='Undo', underline=0,  command=self.undo)
+        self.context_menu.add_command(label='Redo', underline=0,  command=self.redo)
+        self.context_menu.add_command(label='Select All', underline=7,  command=self.select_all)
 
     def _show_context_menu(self, event):
         self.context_menu.tk_popup(event.x_root, event.y_root)
